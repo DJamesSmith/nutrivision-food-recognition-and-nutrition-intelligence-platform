@@ -1,0 +1,182 @@
+# Python
+**pycache**/
+*.py[cod]
+*$py.class
+*.so
+
+# Python packaging
+
+build/
+dist/
+*.egg-info/
+.eggs/
+
+# Virtual Environments
+venv/
+env/
+.venv/
+.env/
+virtualenv/
+ENV/
+env.bak/
+venv.bak/
+
+# Environment Variables / Secrets
+.env
+.env.*
+!.env.example
+
+# Django
+*.log
+local_settings.py
+db.sqlite3
+db.sqlite3-journal
+
+# Django migration cache
+**/**pycache**/
+
+# Media / User Uploads
+media/
+uploads/
+user_uploads/
+
+# Uploaded datasets
+datasets/
+data/
+training_data/
+
+# Machine Learning Artifacts
+ml_models/
+models/
+*.h5
+*.hdf5
+*.keras
+*.pb
+*.ckpt
+*.joblib
+*.pkl
+*.pickle
+*.weights.h5
+
+# TensorFlow
+
+checkpoint/
+logs/
+tensorboard/
+*.tfevents.*
+
+
+# Jupyter
+.ipynb_checkpoints/
+
+# Celery / Redis
+celerybeat-schedule
+celerybeat.pid
+
+# Coverage / Testing
+.coverage
+.coverage.*
+htmlcov/
+.pytest_cache/
+.tox/
+.nox/
+coverage.xml
+*.cover
+
+# Type Checking
+.mypy_cache/
+.dmypy.json
+dmypy.json
+.pyre/
+
+# IDE / Editors
+.vscode/
+.idea/
+*.iml
+
+# macOS
+.DS_Store
+
+# Windows
+Thumbs.db
+ehthumbs.db
+
+# Temporary Files
+*.tmp
+*.temp
+*.swp
+*.swo
+*~
+.cache/
+.pytest_cache/
+
+# Generated Reports / Runtime Files
+reports/
+tmp/
+temp/
+
+# OS / Tooling
+.python-version
+.mypy_cache/
+.ruff_cache/
+.pyre/
+
+````
+
+**One deliberate choice:** I have **not** ignored `static/`. Your JavaScript belongs there and should be committed to GitHub. I have also ignored trained model artifacts and datasets because they should generally be obtained/generated separately rather than committed into the repository.
+
+---
+
+## GitHub repository
+
+### Repository name
+
+**`nutrivision`**
+
+### Repository title
+
+**NutriVision — Food Recognition & Nutrition Intelligence Platform**
+
+### Repository description
+
+**Django-based food recognition and nutrition platform powered by EfficientNetB0, PostgreSQL, JWT authentication, Celery, Redis, and REST APIs.**
+
+### Suggested GitHub topics
+
+```text
+python
+django
+django-rest-framework
+tensorflow
+keras
+efficientnet
+computer-vision
+deep-learning
+food-recognition
+image-classification
+postgresql
+redis
+celery
+jwt
+jquery
+bootstrap
+machine-learning
+transfer-learning
+````
+
+### Suggested repository structure
+
+```text
+nutrivision
+│
+├── Django Backend
+├── EfficientNetB0 ML Pipeline
+├── PostgreSQL Persistence
+├── JWT + Session Authentication
+├── REST API
+├── Redis + Celery
+├── Nutrition Lookup
+└── Bootstrap + jQuery Frontend
+```
+
+One point I would preserve in the implementation: **Food-101 should be the image-classification dataset, while nutrition data should be a separate data source/model layer.** That separation will prevent the project from making the technically incorrect claim that EfficientNetB0 itself predicts calories from an image.
