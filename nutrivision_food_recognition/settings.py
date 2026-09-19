@@ -31,7 +31,7 @@ INSTALLED_APPS = [
     # Local apps
     'accounts',
     'audit',
-    # 'imaging',          -> added in Phase 3
+    'imaging',
     # 'training',         -> added in Phase 4
     # 'classification',   -> added in Phase 5
 ]

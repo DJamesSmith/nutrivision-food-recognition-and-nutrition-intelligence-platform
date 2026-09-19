@@ -9,6 +9,7 @@ from django.views.decorators.http import require_http_methods
 
 from .forms import LoginForm, RegistrationForm
 from .signals import login_failed, user_logged_in_custom, user_logged_out_custom, user_registered
+from .utils import generate_access_token, generate_refresh_token, set_jwt_cookies, unset_jwt_cookies
 
 logger = logging.getLogger(__name__)
 
@@ -56,7 +57,16 @@ def login_view(request):
                 login(request, user)
                 user_logged_in_custom.send(sender=login_view, user=user, request=request)
                 messages.success(request, f"Welcome back, {user.get_short_name()}.")
-                return redirect('accounts:dashboard')
+
+                # Session pages that make jQuery AJAX/FormData calls against
+                # JWT-protected API endpoints (e.g. imaging dataset uploads)
+                # need a JWT cookie too, so issue one alongside the session
+                # cookie at the same login step. The two auth mechanisms
+                # remain independent — this only sets both cookies at once.
+                response = redirect('accounts:dashboard')
+                access_token = generate_access_token(user)
+                refresh_token = generate_refresh_token(user)
+                return set_jwt_cookies(response, access_token, refresh_token)
 
             login_failed.send(sender=login_view, identifier=identifier, request=request)
             messages.error(request, "Invalid credentials. Please try again.")
@@ -76,13 +86,16 @@ def logout_view(request):
     logout(request)
     user_logged_out_custom.send(sender=logout_view, user=user, request=request)
     messages.info(request, "You have been logged out.")
-    return redirect('accounts:login')
+    response = redirect('accounts:login')
+    return unset_jwt_cookies(response)
 
 
 @never_cache
 @login_required(login_url='accounts:login')
 def dashboard_view(request):
     context = {
-        'user': request.user,       # Populated with real data once the imaging/training/classification apps exist (Phases 3-5): total_predictions, latest_model, etc.
+        'user': request.user,
+        # Populated with real data once the imaging/training/classification
+        # apps exist (Phases 3-5): total_predictions, latest_model, etc.
     }
     return render(request, 'accounts/dashboard.html', context)
