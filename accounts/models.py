@@ -17,8 +17,7 @@ class User(AbstractBaseUser, PermissionsMixin):
         max_length=16,
         unique=True,
         db_index=True,
-        validators=[phone_validator],
-    )
+        validators=[phone_validator])
 
     first_name = models.CharField(max_length=150)
     last_name = models.CharField(max_length=150)

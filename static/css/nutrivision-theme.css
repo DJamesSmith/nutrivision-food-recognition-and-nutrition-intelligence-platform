@@ -1,0 +1,260 @@
+/* ==========================================================================
+   NutriVision wallpaper theme (home, login, register)
+   Loaded AFTER bootstrap.min.css and style.css (see templates/base.html), so it
+   only adds to them: nothing in those two files needs to change.
+
+   Every rule below is scoped to body.has-wallpaper, so pages that do not set
+   that body class (the dashboard) render exactly as they did before.
+
+   Quick knobs:
+     --nv-tile          size of one wallpaper tile. Smaller number = smaller icons.
+     --nv-wall-opacity  how strong the wallpaper lines are (0 to 1).
+   ========================================================================== */
+
+:root {
+    --nv-tile: 200px;
+    --nv-wall-opacity: .6;
+
+    --nv-ink: #16241b;
+    --nv-muted: #56665a;
+    --nv-forest: #1f3a28;
+    --nv-leaf: #4d7c0f;
+    --nv-leaf-dark: #3f6212;
+    --nv-lime: #8baf36;
+    --nv-mint: #f3f8ea;
+    --nv-line: #d8e6bd;
+
+    --nv-font-display: "Bricolage Grotesque", "Trebuchet MS", system-ui, sans-serif;
+    --nv-font-body: "Figtree", system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
+}
+
+@media (max-width: 575.98px) {
+    :root { --nv-tile: 170px; }
+}
+
+/* ---------- page shell ---------- */
+
+body.has-wallpaper {
+    /* Bootstrap variables, re-pointed at the palette */
+    --bs-body-font-family: var(--nv-font-body);
+    --bs-body-color: var(--nv-ink);
+    --bs-secondary-color: var(--nv-muted);
+    --bs-heading-color: var(--nv-ink);
+    --bs-link-color-rgb: 77, 124, 15;
+    --bs-link-hover-color-rgb: 63, 98, 18;
+
+    display: flex;
+    flex-direction: column;
+    min-height: 100vh;
+    background-color: var(--nv-mint);
+}
+
+.has-wallpaper .nv-main {
+    flex: 1 0 auto;
+    padding-top: .5rem;
+    padding-bottom: 3.5rem;
+}
+
+.has-wallpaper h1,
+.has-wallpaper h2,
+.has-wallpaper h3 {
+    font-family: var(--nv-font-display);
+    letter-spacing: -.015em;
+}
+
+/* Fixed wallpaper. A fixed pseudo-element is used instead of
+   background-attachment: fixed because iOS Safari ignores the latter.
+   The page content scrolls; the wallpaper never moves. */
+body.has-wallpaper::before {
+    content: "";
+    position: fixed;
+    top: 0;
+    right: 0;
+    bottom: 0;
+    left: 0;
+    z-index: -1;
+    pointer-events: none;
+    background-image: url("../img/veg-pattern.png");
+    background-repeat: repeat;
+    background-size: var(--nv-tile) auto;
+    opacity: var(--nv-wall-opacity);
+}
+
+/* ---------- navbar ---------- */
+
+.has-wallpaper .navbar {
+    position: sticky;
+    top: 0;
+    z-index: 1020;
+}
+
+.has-wallpaper .navbar.bg-dark {
+    --bs-dark-rgb: 31, 58, 40;
+    box-shadow: 0 1px 0 rgba(255, 255, 255, .06), 0 8px 24px -18px rgba(0, 0, 0, .6);
+}
+
+.has-wallpaper .navbar-brand {
+    font-family: var(--nv-font-display);
+    font-weight: 800;
+    font-size: 1.35rem;
+    letter-spacing: -.02em;
+}
+
+/* small leaf mark, drawn with border-radius so no image is needed */
+.has-wallpaper .navbar-brand::before {
+    content: "";
+    display: inline-block;
+    width: .8em;
+    height: .8em;
+    margin-right: .5rem;
+    background: var(--nv-lime);
+    border-radius: 70% 0 70% 0;
+    transform: rotate(-8deg);
+}
+
+.has-wallpaper .navbar .nav-link { font-weight: 500; }
+
+/* ---------- buttons, forms, alerts ---------- */
+
+.has-wallpaper .btn {
+    border-radius: .75rem;
+    font-weight: 600;
+}
+
+.has-wallpaper .btn-primary {
+    --bs-btn-color: #fff;
+    --bs-btn-bg: var(--nv-leaf);
+    --bs-btn-border-color: var(--nv-leaf);
+    --bs-btn-hover-color: #fff;
+    --bs-btn-hover-bg: var(--nv-leaf-dark);
+    --bs-btn-hover-border-color: var(--nv-leaf-dark);
+    --bs-btn-active-color: #fff;
+    --bs-btn-active-bg: #365314;
+    --bs-btn-active-border-color: #365314;
+    --bs-btn-focus-shadow-rgb: 77, 124, 15;
+    --bs-btn-disabled-color: #fff;
+    --bs-btn-disabled-bg: var(--nv-leaf);
+    --bs-btn-disabled-border-color: var(--nv-leaf);
+}
+
+.has-wallpaper .btn-outline-secondary {
+    --bs-btn-color: var(--nv-forest);
+    --bs-btn-border-color: #aebf94;
+    --bs-btn-hover-color: #fff;
+    --bs-btn-hover-bg: var(--nv-forest);
+    --bs-btn-hover-border-color: var(--nv-forest);
+    --bs-btn-active-color: #fff;
+    --bs-btn-active-bg: var(--nv-forest);
+    --bs-btn-active-border-color: var(--nv-forest);
+    --bs-btn-focus-shadow-rgb: 31, 58, 40;
+    background-color: rgba(255, 255, 255, .7);
+}
+
+.has-wallpaper .btn:focus-visible {
+    outline: 3px solid rgba(77, 124, 15, .45);
+    outline-offset: 2px;
+}
+
+.has-wallpaper .form-label {
+    font-weight: 600;
+    font-size: .9rem;
+}
+
+.has-wallpaper .form-control,
+.has-wallpaper .auth-card input[type="text"],
+.has-wallpaper .auth-card input[type="email"],
+.has-wallpaper .auth-card input[type="tel"],
+.has-wallpaper .auth-card input[type="password"] {
+    display: block;
+    width: 100%;
+    padding: .7rem .9rem;
+    border: 1px solid #c4d3a8;
+    border-radius: .75rem;
+    background-color: #fff;
+    color: var(--nv-ink);
+}
+
+.has-wallpaper .form-control:focus,
+.has-wallpaper .auth-card input:focus {
+    border-color: var(--nv-leaf);
+    outline: 0;
+    box-shadow: 0 0 0 .25rem rgba(77, 124, 15, .22);
+}
+
+.has-wallpaper .form-control.is-invalid { border-color: #b02a37; }
+
+/* Django's "error" message tag has no Bootstrap alert style of its own */
+.has-wallpaper .alert-error {
+    --bs-alert-color: var(--bs-danger-text-emphasis);
+    --bs-alert-bg: var(--bs-danger-bg-subtle);
+    --bs-alert-border-color: var(--bs-danger-border-subtle);
+    --bs-alert-link-color: var(--bs-danger-text-emphasis);
+}
+
+.has-wallpaper .alert { border-radius: .875rem; }
+
+/* ---------- login / register ---------- */
+
+.has-wallpaper .nv-center { min-height: calc(100vh - 11rem); }
+
+.auth-card {
+    padding: clamp(1.5rem, 4vw, 2.25rem);
+    background: rgba(255, 255, 255, .94);
+    border: 1px solid var(--nv-line);
+    border-radius: 1.5rem;
+    box-shadow: 0 24px 48px -28px rgba(31, 58, 40, .55);
+    -webkit-backdrop-filter: blur(6px);
+    backdrop-filter: blur(6px);
+}
+
+.auth-title {
+    margin-bottom: .25rem;
+    font-size: 1.9rem;
+    font-weight: 800;
+}
+
+.auth-lead {
+    margin-bottom: 1.5rem;
+    color: var(--nv-muted);
+}
+
+.auth-switch {
+    margin: 1.25rem 0 0;
+    text-align: center;
+    color: var(--nv-muted);
+}
+
+/* ---------- home ---------- */
+
+.nv-hero {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    min-height: calc(100vh - 11rem);
+}
+
+.nv-hero-card {
+    width: 100%;
+    max-width: 46rem;
+    padding: clamp(1.75rem, 5vw, 3.5rem);
+    background: rgba(255, 255, 255, .93);
+    border: 1px solid var(--nv-line);
+    border-radius: 1.75rem;
+    box-shadow: 0 30px 60px -34px rgba(31, 58, 40, .6);
+    -webkit-backdrop-filter: blur(6px);
+    backdrop-filter: blur(6px);
+}
+
+.nv-hero-card h1 {
+    margin-bottom: 1rem;
+    font-size: clamp(2.2rem, 6.5vw, 3.9rem);
+    font-weight: 800;
+    line-height: 1.02;
+}
+
+.nv-hero-lead {
+    max-width: 34rem;
+    margin-bottom: 1.75rem;
+    font-size: clamp(1.05rem, 2.4vw, 1.25rem);
+    color: var(--nv-muted);
+}
