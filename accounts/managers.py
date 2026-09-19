@@ -2,13 +2,9 @@ from django.contrib.auth.base_user import BaseUserManager
 from django.core.exceptions import ValidationError
 
 
+# Manager for the custom User model. Users are identified primarily by email; phone number is a required, unique, secondary identifier that
+# can also be used to log in (see accounts.backends.EmailOrPhoneBackend).
 class CustomUserManager(BaseUserManager):
-    """
-    Manager for the custom User model. Users are identified primarily by
-    email; phone number is a required, unique, secondary identifier that
-    can also be used to log in (see accounts.backends.EmailOrPhoneBackend).
-    """
-
     use_in_migrations = True
 
     def _create_user(self, email, phone_number, password, **extra_fields):

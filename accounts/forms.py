@@ -44,11 +44,8 @@ class RegistrationForm(forms.ModelForm):
         return user
 
 
+# Non-model form: accepts a single 'identifier' field which may contain either an email address or a phone number.
+# Resolution happens in the authentication backend (accounts.backends.EmailOrPhoneBackend).
 class LoginForm(forms.Form):
-    """
-    Non-model form: accepts a single 'identifier' field which may contain
-    either an email address or a phone number. Resolution happens in the
-    authentication backend (accounts.backends.EmailOrPhoneBackend).
-    """
     identifier = forms.CharField(max_length=254, label="Email or Phone Number")
     password = forms.CharField(widget=forms.PasswordInput)
