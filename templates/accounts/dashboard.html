@@ -1,0 +1,51 @@
+{% extends "base.html" %}
+{% block title %}Dashboard — NutriVision{% endblock %}
+{% block content %}
+<h2 class="mb-4">Welcome, {{ user.get_short_name }}</h2>
+
+<div class="row g-3">
+    <div class="col-md-3">
+        <div class="card text-center">
+            <div class="card-body">
+                <h6 class="card-subtitle text-muted mb-2">Total Predictions</h6>
+                <h3 class="card-title">—</h3>
+                <small class="text-muted">Available once the classification app is added (Phase 5)</small>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-3">
+        <div class="card text-center">
+            <div class="card-body">
+                <h6 class="card-subtitle text-muted mb-2">Active Model</h6>
+                <h3 class="card-title">—</h3>
+                <small class="text-muted">Available once the training app is added (Phase 4)</small>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-3">
+        <div class="card text-center">
+            <div class="card-body">
+                <h6 class="card-subtitle text-muted mb-2">Model Accuracy</h6>
+                <h3 class="card-title">—</h3>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-3">
+        <div class="card text-center">
+            <div class="card-body">
+                <h6 class="card-subtitle text-muted mb-2">Training Status</h6>
+                <h3 class="card-title">—</h3>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="card mt-4">
+    <div class="card-header">Account information</div>
+    <div class="card-body">
+        <p><strong>Email:</strong> {{ user.email }} {% if user.is_email_verified %}<span class="badge bg-success">Verified</span>{% else %}<span class="badge bg-warning text-dark">Unverified</span>{% endif %}</p>
+        <p><strong>Phone:</strong> {{ user.phone_number }} {% if user.is_phone_verified %}<span class="badge bg-success">Verified</span>{% else %}<span class="badge bg-warning text-dark">Unverified</span>{% endif %}</p>
+        <p><strong>Member since:</strong> {{ user.date_joined|date:"d M Y" }}</p>
+    </div>
+</div>
+{% endblock %}

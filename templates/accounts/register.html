@@ -1,0 +1,76 @@
+{% extends "base.html" %}
+{% block title %}Register — NutriVision{% endblock %}
+{% block content %}
+<div class="row justify-content-center">
+    <div class="col-md-6">
+        <h2 class="mb-4">Create an account</h2>
+        <form method="post" id="registerForm" novalidate>
+            {% csrf_token %}
+            <div class="row">
+                <div class="col-md-6 mb-3">
+                    <label class="form-label">First name</label>
+                    {{ form.first_name }}
+                    <div class="invalid-feedback">{{ form.first_name.errors|join:", " }}</div>
+                </div>
+                <div class="col-md-6 mb-3">
+                    <label class="form-label">Last name</label>
+                    {{ form.last_name }}
+                    <div class="invalid-feedback">{{ form.last_name.errors|join:", " }}</div>
+                </div>
+            </div>
+            <div class="mb-3">
+                <label class="form-label">Email</label>
+                {{ form.email }}
+                <div class="invalid-feedback">{{ form.email.errors|join:", " }}</div>
+            </div>
+            <div class="mb-3">
+                <label class="form-label">Phone number</label>
+                {{ form.phone_number }}
+                <div class="form-text">International format, e.g. +919876543210</div>
+                <div class="invalid-feedback">{{ form.phone_number.errors|join:", " }}</div>
+            </div>
+            <div class="mb-3">
+                <label class="form-label">Password</label>
+                {{ form.password }}
+                <div class="invalid-feedback">{{ form.password.errors|join:", " }}</div>
+            </div>
+            <div class="mb-3">
+                <label class="form-label">Confirm password</label>
+                {{ form.confirm_password }}
+                <div class="invalid-feedback">{{ form.confirm_password.errors|join:", " }}</div>
+            </div>
+            <button type="submit" class="btn btn-primary w-100">Register</button>
+        </form>
+        <p class="mt-3">Already have an account? <a href="{% url 'accounts:login' %}">Log in</a></p>
+    </div>
+</div>
+{% endblock %}
+{% block extra_js %}
+<script>
+    // Client-side validation only — server-side validation in
+    // accounts.forms.RegistrationForm remains authoritative.
+    $(function () {
+        $('#registerForm input').addClass('form-control');
+
+        $('#registerForm').on('submit', function (e) {
+            let valid = true;
+            const email = $('[name=email]').val().trim();
+            const phone = $('[name=phone_number]').val().trim();
+            const password = $('[name=password]').val();
+            const confirm = $('[name=confirm_password]').val();
+
+            const emailRe = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+            const phoneRe = /^\+?[1-9]\d{7,14}$/;
+
+            $('#registerForm input').removeClass('is-invalid');
+
+            if (!emailRe.test(email)) { $('[name=email]').addClass('is-invalid'); valid = false; }
+            if (!phoneRe.test(phone)) { $('[name=phone_number]').addClass('is-invalid'); valid = false; }
+            if (password.length < 8) { $('[name=password]').addClass('is-invalid'); valid = false; }
+            if (password !== confirm) { $('[name=confirm_password]').addClass('is-invalid'); valid = false; }
+
+            if (!valid) e.preventDefault();
+        });
+    });
+</script>
+{% endblock %}
