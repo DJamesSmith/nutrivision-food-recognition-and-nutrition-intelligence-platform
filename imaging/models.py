@@ -1,8 +1,6 @@
 import uuid
-
 from django.conf import settings
 from django.db import models
-
 from .validators import validate_image_file
 
 
@@ -49,8 +47,7 @@ class Dataset(models.Model):
         return (
             self.images.values('class_label')
             .annotate(count=models.Count('id'))
-            .order_by('class_label')
-        )
+            .order_by('class_label'))
 
     def get_num_images(self):
         return self.images.count()
@@ -72,21 +69,16 @@ class DatasetImage(models.Model):
     class Meta:
         db_table = 'imaging_dataset_image'
         ordering = ['-created_at']
-        indexes = [
-            models.Index(fields=['dataset', 'class_label']),
-        ]
+        indexes = [models.Index(fields=['dataset', 'class_label'])]
 
     def __str__(self):
         return f"{self.dataset.name} / {self.class_label} / {self.image.name}"
 
 
+# General-purpose uploaded image, independent of any training dataset.
+# Used for on-demand uploads such as prediction requests: the classification app (Phase 5) references this model rather than
+# duplicating upload/validation/cleanup logic.
 class UploadedImage(models.Model):
-    """
-    General-purpose uploaded image, independent of any training dataset.
-    Used for on-demand uploads such as prediction requests: the
-    classification app (Phase 5) references this model rather than
-    duplicating upload/validation/cleanup logic.
-    """
     user = models.ForeignKey(
         settings.AUTH_USER_MODEL,
         on_delete=models.CASCADE,

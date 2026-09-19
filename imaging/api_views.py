@@ -22,10 +22,7 @@ def _error(message, status=400, data=None):
     return JsonResponse({"status": "error", "message": message, "data": data}, status=status)
 
 
-# ==================================================
 # GET/POST /api/imaging/datasets/
-# ==================================================
-
 @require_http_methods(["GET", "POST"])
 @jwt_required
 @staff_required
@@ -34,8 +31,7 @@ def dataset_list_create_api(request):
         datasets = Dataset.objects.all()
         return _success(
             "Datasets retrieved.",
-            data=DatasetSerializer(datasets, many=True).data,
-        )
+            data=DatasetSerializer(datasets, many=True).data)
 
     # POST — dataset creation is metadata-only (JSON), not a file upload.
     import json
@@ -51,15 +47,11 @@ def dataset_list_create_api(request):
     dataset = Dataset.objects.create(
         name=serializer.validated_data['name'],
         description=serializer.validated_data.get('description', ''),
-        created_by=request.user,
-    )
+        created_by=request.user)
     return _success("Dataset created.", data=DatasetSerializer(dataset).data, status=201)
 
 
-# ==================================================
 # GET /api/imaging/datasets/<id>/
-# ==================================================
-
 @require_http_methods(["GET"])
 @jwt_required
 @staff_required
@@ -70,10 +62,7 @@ def dataset_detail_api(request, dataset_id):
     return _success("Dataset retrieved.", data=data)
 
 
-# ==================================================
 # POST /api/imaging/datasets/<id>/images/
-# ==================================================
-
 @require_http_methods(["POST"])
 @jwt_required
 @staff_required
@@ -106,20 +95,12 @@ def dataset_image_upload_api(request, dataset_id):
         request=request,
         description=f"Dataset image uploaded to '{dataset.name}' (class: {class_label}).",
         reference_model='DatasetImage',
-        reference_id=instance.id,
-    )
+        reference_id=instance.id)
 
-    return _success(
-        "Image uploaded successfully.",
-        data=DatasetImageSerializer(instance).data,
-        status=201,
-    )
+    return _success("Image uploaded successfully.", data=DatasetImageSerializer(instance).data, status=201)
 
 
-# ==================================================
 # DELETE /api/imaging/datasets/<id>/images/<image_id>/
-# ==================================================
-
 @require_http_methods(["DELETE"])
 @jwt_required
 @staff_required
@@ -129,19 +110,13 @@ def dataset_image_delete_api(request, dataset_id, image_id):
     return _success("Image deleted.", data=None)
 
 
-# ==================================================
+# General-purpose image upload for any authenticated user (not just staff) — e.g. the image a user wants classified.
+# The classification app (Phase 5) will accept an UploadedImage id in its predict endpoint.
 # POST /api/imaging/images/upload/
-# ==================================================
-
 @require_http_methods(["POST"])
 @jwt_required
 @log_execution_time
 def uploaded_image_create_api(request):
-    """
-    General-purpose image upload for any authenticated user (not just
-    staff) — e.g. the image a user wants classified. The classification
-    app (Phase 5) will accept an UploadedImage id in its predict endpoint.
-    """
     image_file = request.FILES.get('image')
     if not image_file:
         return _error("No image file was provided.", status=400)
@@ -150,8 +125,7 @@ def uploaded_image_create_api(request):
         user=request.user,
         original_filename=image_file.name,
         content_type=getattr(image_file, 'content_type', '') or '',
-        file_size=image_file.size,
-    )
+        file_size=image_file.size)
     instance.image = image_file
 
     try:
@@ -168,11 +142,6 @@ def uploaded_image_create_api(request):
         request=request,
         description="User uploaded an image.",
         reference_model='UploadedImage',
-        reference_id=instance.id,
-    )
+        reference_id=instance.id)
 
-    return _success(
-        "Image uploaded successfully.",
-        data=UploadedImageSerializer(instance).data,
-        status=201,
-    )
+    return _success("Image uploaded successfully.", data=UploadedImageSerializer(instance).data, status=201)
