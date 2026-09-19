@@ -58,10 +58,8 @@ def login_view(request):
                 user_logged_in_custom.send(sender=login_view, user=user, request=request)
                 messages.success(request, f"Welcome back, {user.get_short_name()}.")
 
-                # Session pages that make jQuery AJAX/FormData calls against
-                # JWT-protected API endpoints (e.g. imaging dataset uploads)
-                # need a JWT cookie too, so issue one alongside the session
-                # cookie at the same login step. The two auth mechanisms
+                # Session pages that make jQuery AJAX/FormData calls against JWT-protected API endpoints (e.g. imaging dataset uploads)
+                # need a JWT cookie too, so issue one alongside the session cookie at the same login step. The two auth mechanisms
                 # remain independent — this only sets both cookies at once.
                 response = redirect('accounts:dashboard')
                 access_token = generate_access_token(user)
