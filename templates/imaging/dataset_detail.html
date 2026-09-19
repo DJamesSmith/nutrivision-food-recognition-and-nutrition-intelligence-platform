@@ -1,0 +1,175 @@
+{% extends "base.html" %}
+{% block title %}{{ dataset.name }} — NutriVision{% endblock %}
+{% block content %}
+<div class="d-flex justify-content-between align-items-center mb-3">
+    <h2>{{ dataset.name }}</h2>
+    <span class="badge bg-info text-dark fs-6">{{ dataset.get_status_display }}</span>
+</div>
+<p class="text-muted">{{ dataset.description }}</p>
+
+<div class="row mb-4">
+    <div class="col-md-3"><div class="card text-center"><div class="card-body">
+        <h6 class="text-muted">Images</h6><h3 id="statNumImages">{{ dataset.get_num_images }}</h3>
+    </div></div></div>
+    <div class="col-md-3"><div class="card text-center"><div class="card-body">
+        <h6 class="text-muted">Classes</h6><h3 id="statNumClasses">{{ dataset.get_num_classes }}</h3>
+    </div></div></div>
+</div>
+
+<div class="card mb-4">
+    <div class="card-header">Upload Image</div>
+    <div class="card-body">
+        <form id="uploadForm" novalidate>
+            <div class="row g-2 align-items-end">
+                <div class="col-md-4">
+                    <label class="form-label">Class label</label>
+                    <input type="text" class="form-control" id="classLabelInput" name="class_label" required>
+                </div>
+                <div class="col-md-5">
+                    <label class="form-label">Image file</label>
+                    <input type="file" class="form-control" id="imageInput" name="image" accept=".jpg,.jpeg,.png,.webp" required>
+                </div>
+                <div class="col-md-3">
+                    <button type="submit" class="btn btn-primary w-100" id="uploadBtn">Upload</button>
+                </div>
+            </div>
+            <div class="invalid-feedback d-block" id="uploadError"></div>
+            <div class="progress mt-2 d-none" id="uploadProgressWrap" style="height: 6px;">
+                <div class="progress-bar" id="uploadProgress" role="progressbar" style="width: 0%"></div>
+            </div>
+        </form>
+    </div>
+</div>
+
+<h5>Images in this dataset</h5>
+<div class="row g-3" id="imageGrid">
+    {% for img in images %}
+        <div class="col-md-2 col-sm-3 col-4" id="imgCard{{ img.id }}">
+            <div class="card">
+                <img src="{{ img.image.url }}" class="card-img-top" style="height:110px;object-fit:cover;">
+                <div class="card-body p-2">
+                    <p class="mb-1 small text-truncate">{{ img.class_label }}</p>
+                    <button class="btn btn-sm btn-outline-danger w-100 delete-image-btn" data-image-id="{{ img.id }}">Delete</button>
+                </div>
+            </div>
+        </div>
+    {% empty %}
+        <p class="text-muted">No images uploaded yet.</p>
+    {% endfor %}
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+    const DATASET_ID = {{ dataset.id }};
+    const ALLOWED_EXTENSIONS = ['.jpg', '.jpeg', '.png', '.webp'];
+    const MAX_SIZE_MB = 10;
+
+    function validateImageClientSide(file) {
+        const name = file.name.toLowerCase();
+        const ext = '.' + name.split('.').pop();
+        if (!ALLOWED_EXTENSIONS.includes(ext)) {
+            return `Unsupported file type. Allowed: ${ALLOWED_EXTENSIONS.join(', ')}`;
+        }
+        if (file.size > MAX_SIZE_MB * 1024 * 1024) {
+            return `File exceeds ${MAX_SIZE_MB} MB.`;
+        }
+        return null;
+    }
+
+    $(function () {
+        $('#uploadForm').on('submit', function (e) {
+            e.preventDefault();
+            $('#uploadError').text('');
+
+            const classLabel = $('#classLabelInput').val().trim();
+            const fileInput = $('#imageInput')[0];
+            const file = fileInput.files[0];
+
+            if (!classLabel) {
+                $('#uploadError').text('Class label is required.');
+                return;
+            }
+            if (!file) {
+                $('#uploadError').text('Please choose an image file.');
+                return;
+            }
+            const clientError = validateImageClientSide(file);
+            if (clientError) {
+                $('#uploadError').text(clientError);
+                return;
+            }
+
+            // Server-side validation (imaging.validators.validate_image_file)
+            // remains authoritative — this is a fast pre-check only.
+            const formData = new FormData();
+            formData.append('image', file);
+            formData.append('class_label', classLabel);
+
+            $('#uploadBtn').prop('disabled', true).text('Uploading...');
+            $('#uploadProgressWrap').removeClass('d-none');
+
+            $.ajax({
+                url: `/api/imaging/datasets/${DATASET_ID}/images/`,
+                type: 'POST',
+                data: formData,
+                processData: false,
+                contentType: false,
+                xhr: function () {
+                    const xhr = new window.XMLHttpRequest();
+                    xhr.upload.addEventListener('progress', function (evt) {
+                        if (evt.lengthComputable) {
+                            const pct = Math.round((evt.loaded / evt.total) * 100);
+                            $('#uploadProgress').css('width', pct + '%');
+                        }
+                    });
+                    return xhr;
+                },
+                success: function (response) {
+                    const img = response.data;
+                    const card = `
+                        <div class="col-md-2 col-sm-3 col-4" id="imgCard${img.id}">
+                            <div class="card">
+                                <img src="${img.image}" class="card-img-top" style="height:110px;object-fit:cover;">
+                                <div class="card-body p-2">
+                                    <p class="mb-1 small text-truncate">${img.class_label}</p>
+                                    <button class="btn btn-sm btn-outline-danger w-100 delete-image-btn" data-image-id="${img.id}">Delete</button>
+                                </div>
+                            </div>
+                        </div>`;
+                    $('#imageGrid').prepend(card);
+                    $('#statNumImages').text(parseInt($('#statNumImages').text()) + 1);
+                    $('#classLabelInput').val('');
+                    fileInput.value = '';
+                },
+                error: function (xhr) {
+                    const msg = (xhr.responseJSON && xhr.responseJSON.message) || 'Upload failed.';
+                    $('#uploadError').text(msg);
+                },
+                complete: function () {
+                    $('#uploadBtn').prop('disabled', false).text('Upload');
+                    $('#uploadProgressWrap').addClass('d-none');
+                    $('#uploadProgress').css('width', '0%');
+                }
+            });
+        });
+
+        $('#imageGrid').on('click', '.delete-image-btn', function () {
+            const imageId = $(this).data('image-id');
+            if (!confirm('Delete this image?')) return;
+
+            $.ajax({
+                url: `/api/imaging/datasets/${DATASET_ID}/images/${imageId}/`,
+                type: 'DELETE',
+                success: function () {
+                    $(`#imgCard${imageId}`).remove();
+                    $('#statNumImages').text(Math.max(0, parseInt($('#statNumImages').text()) - 1));
+                },
+                error: function (xhr) {
+                    alert((xhr.responseJSON && xhr.responseJSON.message) || 'Delete failed.');
+                }
+            });
+        });
+    });
+</script>
+{% endblock %}
