@@ -1,2 +1,21 @@
-Django==6.1.1
-python-dotenv==1.2.3
+Django>=5.0,<5.1
+djangorestframework>=3.15
+django-cors-headers>=4.3
+psycopg2-binary>=2.9
+python-dotenv>=1.0
+PyJWT>=2.8
+Pillow>=10.0
+
+# Added in Phase 4 - Celery/Redis + EfficientNetB0 training stack.
+# TensorFlow/NumPy/scikit-learn are only imported lazily inside
+# training/ml_pipeline.py (worker-side), so the Django web process itself
+# does not need them - but the machine actually running the Celery
+# worker does.
+celery>=5.3
+redis>=5.0
+tensorflow>=2.16
+numpy>=1.26
+scikit-learn>=1.4
+
+# Added in later phases (kept here for reference, not required until then):
+# django-redis>=5.4

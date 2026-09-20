@@ -1,0 +1,68 @@
+{% extends "base.html" %}
+{% block title %}Training Job #{{ job.id }} — NutriVision{% endblock %}
+{% block content %}
+<h2 class="mb-4">Training Job #{{ job.id }}</h2>
+
+<div class="card">
+    <div class="card-body">
+        <p><strong>Dataset:</strong> {{ job.dataset.name }}</p>
+        <p><strong>Status:</strong> <span class="badge" id="statusBadge">{{ job.status }}</span></p>
+        <p><strong>Epochs:</strong> {{ job.epochs }}</p>
+        <p><strong>Task ID:</strong> <code>{{ job.task_id|default:"—" }}</code></p>
+        <div id="metrics">
+            <p><strong>Training Accuracy:</strong> <span id="mAcc">{{ job.accuracy|floatformat:4|default:"—" }}</span></p>
+            <p><strong>Validation Accuracy:</strong> <span id="mValAcc">{{ job.validation_accuracy|floatformat:4|default:"—" }}</span></p>
+            <p><strong>Training Loss:</strong> <span id="mLoss">{{ job.loss|floatformat:4|default:"—" }}</span></p>
+            <p><strong>Validation Loss:</strong> <span id="mValLoss">{{ job.validation_loss|floatformat:4|default:"—" }}</span></p>
+        </div>
+        <div id="errorBox" class="alert alert-danger {% if not job.error_message %}d-none{% endif %}">
+            {{ job.error_message }}
+        </div>
+    </div>
+</div>
+<a href="{% url 'training:training_dashboard' %}" class="btn btn-outline-secondary mt-3">Back to dashboard</a>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+    const JOB_ID = {{ job.id }};
+
+    function badgeClass(status) {
+        if (status === 'COMPLETED') return 'bg-success';
+        if (status === 'FAILED') return 'bg-danger';
+        if (status === 'STARTED') return 'bg-warning text-dark';
+        return 'bg-secondary';
+    }
+
+    let pollHandle = null;
+
+    function poll() {
+        $.ajax({
+            url: `/api/training/jobs/${JOB_ID}/`,
+            type: 'GET',
+            success: function (response) {
+                const job = response.data;
+                $('#statusBadge').text(job.status).attr('class', 'badge ' + badgeClass(job.status));
+                $('#mAcc').text(job.accuracy !== null ? job.accuracy.toFixed(4) : '—');
+                $('#mValAcc').text(job.validation_accuracy !== null ? job.validation_accuracy.toFixed(4) : '—');
+                $('#mLoss').text(job.loss !== null ? job.loss.toFixed(4) : '—');
+                $('#mValLoss').text(job.validation_loss !== null ? job.validation_loss.toFixed(4) : '—');
+
+                if (job.error_message) {
+                    $('#errorBox').removeClass('d-none').text(job.error_message);
+                }
+                if (job.status === 'COMPLETED' || job.status === 'FAILED') {
+                    clearInterval(pollHandle);
+                }
+            }
+        });
+    }
+
+    $(function () {
+        const initialStatus = $('#statusBadge').text().trim();
+        if (initialStatus !== 'COMPLETED' && initialStatus !== 'FAILED') {
+            pollHandle = setInterval(poll, 4000);
+        }
+    });
+</script>
+{% endblock %}

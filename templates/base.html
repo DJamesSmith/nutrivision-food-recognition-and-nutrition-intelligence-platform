@@ -27,6 +27,7 @@
                             <li class="nav-item"><a class="nav-link" href="{% url 'accounts:dashboard' %}">Dashboard</a></li>
                             {% if user.is_staff or user.is_superuser %}
                                 <li class="nav-item"><a class="nav-link" href="{% url 'imaging:dataset_list' %}">Datasets</a></li>
+                                <li class="nav-item"><a class="nav-link" href="{% url 'training:training_dashboard' %}">Training</a></li>
                                 <li class="nav-item"><a class="nav-link" href="{% url 'audit:audit_log_list' %}">Audit Logs</a></li>
                             {% endif %}
                             <li class="nav-item">

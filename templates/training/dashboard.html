@@ -1,0 +1,134 @@
+{% extends "base.html" %}
+{% block title %}Training — NutriVision{% endblock %}
+{% block content %}
+<h2 class="mb-4">Model Training</h2>
+
+<div class="card mb-4">
+    <div class="card-header">Start a new training run</div>
+    <div class="card-body">
+        <form id="trainForm" class="row g-2 align-items-end" novalidate>
+            <div class="col-md-5">
+                <label class="form-label">Dataset</label>
+                <select class="form-select" id="datasetSelect" required>
+                    <option value="">Select a dataset…</option>
+                    {% for ds in datasets %}
+                        <option value="{{ ds.id }}">{{ ds.name }} ({{ ds.get_num_classes }} classes, {{ ds.get_num_images }} images)</option>
+                    {% endfor %}
+                </select>
+            </div>
+            <div class="col-md-3">
+                <label class="form-label">Epochs</label>
+                <input type="number" class="form-control" id="epochsInput" min="1" value="10">
+            </div>
+            <div class="col-md-4">
+                <button type="submit" class="btn btn-primary w-100" id="trainBtn">Queue Training</button>
+            </div>
+            <div class="col-12">
+                <div class="invalid-feedback d-block" id="trainError"></div>
+                <div class="text-success d-none" id="trainSuccess"></div>
+            </div>
+        </form>
+    </div>
+</div>
+
+<h5>Recent training jobs</h5>
+<div class="table-responsive mb-4">
+    <table class="table table-sm table-striped">
+        <thead><tr><th>#</th><th>Dataset</th><th>Status</th><th>Val. Accuracy</th><th>Started</th><th></th></tr></thead>
+        <tbody id="jobsTableBody">
+            {% for job in jobs %}
+                <tr>
+                    <td>{{ job.id }}</td>
+                    <td>{{ job.dataset.name }}</td>
+                    <td><span class="badge {% if job.status == 'COMPLETED' %}bg-success{% elif job.status == 'FAILED' %}bg-danger{% elif job.status == 'STARTED' %}bg-warning text-dark{% else %}bg-secondary{% endif %}">{{ job.status }}</span></td>
+                    <td>{{ job.validation_accuracy|floatformat:4|default:"—" }}</td>
+                    <td>{{ job.started_at|date:"d M H:i"|default:"—" }}</td>
+                    <td><a href="{% url 'training:training_job_detail' job.id %}" class="btn btn-sm btn-outline-secondary">View</a></td>
+                </tr>
+            {% empty %}
+                <tr><td colspan="6" class="text-center text-muted">No training jobs yet.</td></tr>
+            {% endfor %}
+        </tbody>
+    </table>
+</div>
+
+<h5>Model versions</h5>
+<div class="table-responsive">
+    <table class="table table-sm table-striped">
+        <thead><tr><th>Version</th><th>Dataset</th><th>Classes</th><th>Val. Accuracy</th><th>Active</th><th></th></tr></thead>
+        <tbody id="modelsTableBody">
+            {% for mv in model_versions %}
+                <tr id="modelRow{{ mv.id }}">
+                    <td>{{ mv.version }}</td>
+                    <td>{{ mv.dataset.name }}</td>
+                    <td>{{ mv.num_classes }}</td>
+                    <td>{{ mv.validation_accuracy|floatformat:4|default:"—" }}</td>
+                    <td>{% if mv.is_active %}<span class="badge bg-success">Active</span>{% else %}<span class="text-muted">—</span>{% endif %}</td>
+                    <td>
+                        {% if not mv.is_active %}
+                            <button class="btn btn-sm btn-outline-primary activate-model-btn" data-version-id="{{ mv.id }}">Activate</button>
+                        {% endif %}
+                    </td>
+                </tr>
+            {% empty %}
+                <tr><td colspan="6" class="text-center text-muted">No trained models yet.</td></tr>
+            {% endfor %}
+        </tbody>
+    </table>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+    $(function () {
+        $('#trainForm').on('submit', function (e) {
+            e.preventDefault();
+            $('#trainError').text('');
+            $('#trainSuccess').addClass('d-none');
+
+            const datasetId = $('#datasetSelect').val();
+            const epochs = parseInt($('#epochsInput').val(), 10);
+
+            if (!datasetId) { $('#trainError').text('Please select a dataset.'); return; }
+            if (!epochs || epochs <= 0) { $('#trainError').text('Epochs must be a positive number.'); return; }
+
+            $('#trainBtn').prop('disabled', true).text('Queuing…');
+
+            $.ajax({
+                url: '/api/training/train/',
+                type: 'POST',
+                contentType: 'application/json',
+                data: JSON.stringify({dataset_id: parseInt(datasetId, 10), epochs: epochs}),
+                success: function (response) {
+                    $('#trainSuccess').removeClass('d-none')
+                        .text(`Training queued — task ${response.data.task_id} (job #${response.data.training_job_id}).`);
+                    setTimeout(() => window.location.reload(), 1200);
+                },
+                error: function (xhr) {
+                    const msg = (xhr.responseJSON && xhr.responseJSON.message) || 'Failed to queue training.';
+                    $('#trainError').text(msg);
+                },
+                complete: function () {
+                    $('#trainBtn').prop('disabled', false).text('Queue Training');
+                }
+            });
+        });
+
+        $('#modelsTableBody').on('click', '.activate-model-btn', function () {
+            const versionId = $(this).data('version-id');
+            if (!confirm('Activate this model version for predictions?')) return;
+
+            $.ajax({
+                url: `/api/training/models/${versionId}/activate/`,
+                type: 'POST',
+                success: function () {
+                    window.location.reload();
+                },
+                error: function (xhr) {
+                    alert((xhr.responseJSON && xhr.responseJSON.message) || 'Activation failed.');
+                }
+            });
+        });
+    });
+</script>
+{% endblock %}

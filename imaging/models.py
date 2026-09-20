@@ -28,8 +28,7 @@ class Dataset(models.Model):
         settings.AUTH_USER_MODEL,
         on_delete=models.SET_NULL,
         null=True,
-        related_name='created_datasets',
-    )
+        related_name='created_datasets')
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
 
@@ -41,7 +40,7 @@ class Dataset(models.Model):
         return self.name
 
     def get_num_classes(self):
-        return self.images.values('class_label').distinct().count()
+        return self.images.order_by().values('class_label').distinct().count()
 
     def get_class_distribution(self):
         return (
@@ -62,8 +61,7 @@ class DatasetImage(models.Model):
         settings.AUTH_USER_MODEL,
         on_delete=models.SET_NULL,
         null=True,
-        related_name='uploaded_dataset_images',
-    )
+        related_name='uploaded_dataset_images')
     created_at = models.DateTimeField(auto_now_add=True)
 
     class Meta:
@@ -75,15 +73,13 @@ class DatasetImage(models.Model):
         return f"{self.dataset.name} / {self.class_label} / {self.image.name}"
 
 
-# General-purpose uploaded image, independent of any training dataset.
-# Used for on-demand uploads such as prediction requests: the classification app (Phase 5) references this model rather than
-# duplicating upload/validation/cleanup logic.
+# General-purpose uploaded image, independent of any training dataset. Used for on-demand uploads such as prediction requests:
+# the classification app (Phase 5) references this model rather than duplicating upload/validation/cleanup logic.
 class UploadedImage(models.Model):
     user = models.ForeignKey(
         settings.AUTH_USER_MODEL,
         on_delete=models.CASCADE,
-        related_name='uploaded_images',
-    )
+        related_name='uploaded_images')
     image = models.ImageField(upload_to=uploaded_image_upload_path, validators=[validate_image_file])
     original_filename = models.CharField(max_length=255, blank=True)
     content_type = models.CharField(max_length=100, blank=True)
