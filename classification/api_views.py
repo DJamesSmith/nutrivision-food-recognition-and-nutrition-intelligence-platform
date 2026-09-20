@@ -25,10 +25,7 @@ def _error(message, status=400, data=None):
     return JsonResponse({"status": "error", "message": message, "data": data}, status=status)
 
 
-# ==================================================
 # POST /api/classification/predict/
-# ==================================================
-
 @require_http_methods(["POST"])
 @jwt_required
 @log_execution_time
@@ -49,8 +46,7 @@ def predict_api(request):
         user=request.user,
         original_filename=image_file.name,
         content_type=getattr(image_file, 'content_type', '') or '',
-        file_size=image_file.size,
-    )
+        file_size=image_file.size)
     uploaded_image.image = image_file
 
     try:
@@ -64,8 +60,7 @@ def predict_api(request):
     log_event(
         AuditLog.EventType.IMAGE_UPLOADED, user=request.user, request=request,
         description="Image uploaded for prediction.",
-        reference_model='UploadedImage', reference_id=uploaded_image.id,
-    )
+        reference_model='UploadedImage', reference_id=uploaded_image.id)
 
     # ---- Preprocessing -> Load Active Model -> Prediction ----
     try:
@@ -83,32 +78,22 @@ def predict_api(request):
         model_version=model_version,
         predicted_class=predicted_class,
         confidence=confidence,
-        class_probabilities=probabilities,
-    )
+        class_probabilities=probabilities)
 
     log_event(
         AuditLog.EventType.PREDICTION_CREATED, user=request.user, request=request,
         description=f"Predicted '{predicted_class}' ({confidence:.2%}) using model {model_version.version}.",
-        reference_model='Prediction', reference_id=prediction.id,
-    )
+        reference_model='Prediction', reference_id=prediction.id)
 
-    return _success(
-        "Prediction completed successfully.",
-        data=PredictionSerializer(prediction, context={'request': request}).data,
-        status=201,
-    )
+    return _success("Prediction completed successfully.", data=PredictionSerializer(prediction, context={'request': request}).data, status=201)
 
 
-# ==================================================
 # GET /api/classification/history/
-# ==================================================
-
 @require_http_methods(["GET"])
 @jwt_required
 def history_api(request):
-    # Users only ever see their own predictions, unless they are
-    # staff/admin AND explicitly ask for everyone's (?all=true) — server-
-    # side enforced, never left to the frontend to decide.
+    # Users only ever see their own predictions, unless they are staff/admin AND explicitly ask for everyone's (?all=true) — server-side enforced,
+    # never left to the frontend to decide.
     show_all = request.GET.get('all') == 'true' and (request.user.is_staff or request.user.is_superuser)
 
     queryset = Prediction.objects.select_related('model_version', 'uploaded_image')
@@ -123,12 +108,9 @@ def history_api(request):
     paginator = Paginator(queryset, page_size)
     page_obj = paginator.get_page(page_number)
 
-    return _success(
-        "Prediction history retrieved.",
-        data={
-            "results": PredictionSerializer(page_obj.object_list, many=True, context={'request': request}).data,
-            "page": page_obj.number,
-            "num_pages": paginator.num_pages,
-            "count": paginator.count,
-        },
-    )
+    return _success("Prediction history retrieved.", data={
+        "results": PredictionSerializer(page_obj.object_list, many=True, context={'request': request}).data,
+        "page": page_obj.number,
+        "num_pages": paginator.num_pages,
+        "count": paginator.count,
+    })
