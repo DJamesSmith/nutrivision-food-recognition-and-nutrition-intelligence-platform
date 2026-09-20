@@ -9,7 +9,7 @@ urlpatterns = [
     path('', include('audit.urls')),
     path('', include('imaging.urls')),
     path('', include('training.urls')),
-    # path('', include('classification.urls')),
+    path('', include('classification.urls')),
 ]
 
 if settings.DEBUG:

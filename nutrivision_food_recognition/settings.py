@@ -33,7 +33,7 @@ INSTALLED_APPS = [
     'audit',
     'imaging',
     'training',
-    # 'classification',   -> added in Phase 5
+    'classification',
 ]
 
 MIDDLEWARE = [

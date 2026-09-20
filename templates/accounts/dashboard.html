@@ -1,51 +1,84 @@
 {% extends "base.html" %}
 {% block title %}Dashboard — NutriVision{% endblock %}
+
 {% block content %}
-<h2 class="mb-4">Welcome, {{ user.get_short_name }}</h2>
+    <h2 class="mb-4">Welcome, {{ user.get_short_name }}</h2>
+    <div class="row g-3">
+        <div class="col-md-3">
+            <div class="card text-center">
+                <div class="card-body">
+                    <h6 class="card-subtitle text-muted mb-2">Total Predictions</h6>
+                    <h3 class="card-title">{{ total_predictions }}</h3>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-3">
+            <div class="card text-center">
+                <div class="card-body">
+                    <h6 class="card-subtitle text-muted mb-2">Active Model</h6>
+                    <h3 class="card-title">{{ active_model.version|default:"—" }}</h3>
+                    {% if active_model %}<small class="text-muted">{{ active_model.architecture }}</small>{% endif %}
+                </div>
+            </div>
+        </div>
+        <div class="col-md-3">
+            <div class="card text-center">
+                <div class="card-body">
+                    <h6 class="card-subtitle text-muted mb-2">Model Accuracy</h6>
+                    <h3 class="card-title">{{ active_model.validation_accuracy|floatformat:2|default:"—" }}</h3>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-3">
+            <div class="card text-center">
+                <div class="card-body">
+                    <h6 class="card-subtitle text-muted mb-2">Latest Training Status</h6>
+                    <h3 class="card-title">
+                        {% if latest_training_job %}
+                            <span class="badge {% if latest_training_job.status == 'COMPLETED' %}bg-success{% elif latest_training_job.status == 'FAILED' %}bg-danger{% elif latest_training_job.status == 'STARTED' %}bg-warning text-dark{% else %}bg-secondary{% endif %}">{{ latest_training_job.status }}</span>
+                        {% else %}—{% endif %}
+                    </h3>
+                </div>
+            </div>
+        </div>
+    </div>
 
-<div class="row g-3">
-    <div class="col-md-3">
-        <div class="card text-center">
-            <div class="card-body">
-                <h6 class="card-subtitle text-muted mb-2">Total Predictions</h6>
-                <h3 class="card-title">—</h3>
-                <small class="text-muted">Available once the classification app is added (Phase 5)</small>
-            </div>
+    <div class="row mt-4 g-3">
+        <div class="col-md-6">
+            <a href="{% url 'classification:predict' %}" class="btn btn-primary w-100 py-3">Classify a Food Photo</a>
+        </div>
+        <div class="col-md-6">
+            <a href="{% url 'classification:history' %}" class="btn btn-outline-secondary w-100 py-3">View My Prediction History</a>
         </div>
     </div>
-    <div class="col-md-3">
-        <div class="card text-center">
-            <div class="card-body">
-                <h6 class="card-subtitle text-muted mb-2">Active Model</h6>
-                <h3 class="card-title">—</h3>
-                <small class="text-muted">Available once the training app is added (Phase 4)</small>
-            </div>
-        </div>
-    </div>
-    <div class="col-md-3">
-        <div class="card text-center">
-            <div class="card-body">
-                <h6 class="card-subtitle text-muted mb-2">Model Accuracy</h6>
-                <h3 class="card-title">—</h3>
-            </div>
-        </div>
-    </div>
-    <div class="col-md-3">
-        <div class="card text-center">
-            <div class="card-body">
-                <h6 class="card-subtitle text-muted mb-2">Training Status</h6>
-                <h3 class="card-title">—</h3>
-            </div>
-        </div>
-    </div>
-</div>
 
-<div class="card mt-4">
-    <div class="card-header">Account information</div>
-    <div class="card-body">
-        <p><strong>Email:</strong> {{ user.email }} {% if user.is_email_verified %}<span class="badge bg-success">Verified</span>{% else %}<span class="badge bg-warning text-dark">Unverified</span>{% endif %}</p>
-        <p><strong>Phone:</strong> {{ user.phone_number }} {% if user.is_phone_verified %}<span class="badge bg-success">Verified</span>{% else %}<span class="badge bg-warning text-dark">Unverified</span>{% endif %}</p>
-        <p><strong>Member since:</strong> {{ user.date_joined|date:"d M Y" }}</p>
+    <div class="card mt-4">
+        <div class="card-header">Recent predictions</div>
+        <div class="card-body p-0">
+            <table class="table mb-0">
+                <thead><tr><th>Class</th><th>Confidence</th><th>Model</th><th>Date</th></tr></thead>
+                <tbody>
+                    {% for p in recent_predictions %}
+                        <tr>
+                            <td>{{ p.predicted_class }}</td>
+                            <td>{{ p.confidence|floatformat:2 }}</td>
+                            <td>{{ p.model_version.version }}</td>
+                            <td>{{ p.created_at|date:"d M Y H:i" }}</td>
+                        </tr>
+                    {% empty %}
+                        <tr><td colspan="4" class="text-center text-muted py-3">No predictions yet.</td></tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
     </div>
-</div>
+
+    <div class="card mt-4">
+        <div class="card-header">Account information</div>
+        <div class="card-body">
+            <p><strong>Email:</strong> {{ user.email }} {% if user.is_email_verified %}<span class="badge bg-success">Verified</span>{% else %}<span class="badge bg-warning text-dark">Unverified</span>{% endif %}</p>
+            <p><strong>Phone:</strong> {{ user.phone_number }} {% if user.is_phone_verified %}<span class="badge bg-success">Verified</span>{% else %}<span class="badge bg-warning text-dark">Unverified</span>{% endif %}</p>
+            <p><strong>Member since:</strong> {{ user.date_joined|date:"d M Y" }}</p>
+        </div>
+    </div>
 {% endblock %}
