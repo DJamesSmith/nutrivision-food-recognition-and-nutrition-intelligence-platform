@@ -1,0 +1,119 @@
+{% extends "base.html" %}
+{% block title %}Predict — NutriVision{% endblock %}
+{% block content %}
+<div class="row justify-content-center">
+    <div class="col-md-7">
+        <h2 class="mb-4">Classify a Food Photo</h2>
+
+        <form id="predictForm" novalidate>
+            <div class="mb-3">
+                <label class="form-label">Choose an image</label>
+                <input type="file" class="form-control" id="predictImageInput" accept=".jpg,.jpeg,.png,.webp" required>
+                <div class="invalid-feedback d-block" id="predictError"></div>
+            </div>
+
+            <div class="text-center mb-3">
+                <img id="imagePreview" class="img-fluid rounded d-none" style="max-height: 300px;">
+            </div>
+
+            <button type="submit" class="btn btn-primary w-100" id="predictBtn">Predict</button>
+        </form>
+
+        <div class="card mt-4 d-none" id="resultCard">
+            <div class="card-header">Result</div>
+            <div class="card-body">
+                <h4 id="resultClass"></h4>
+                <p class="text-muted">Confidence: <strong id="resultConfidence"></strong> — Model <span id="resultModelVersion"></span></p>
+                <div id="resultProbabilities"></div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+    const ALLOWED_EXTENSIONS = ['.jpg', '.jpeg', '.png', '.webp'];
+    const MAX_SIZE_MB = 10;
+
+    function validateImageClientSide(file) {
+        const ext = '.' + file.name.toLowerCase().split('.').pop();
+        if (!ALLOWED_EXTENSIONS.includes(ext)) {
+            return `Unsupported file type. Allowed: ${ALLOWED_EXTENSIONS.join(', ')}`;
+        }
+        if (file.size > MAX_SIZE_MB * 1024 * 1024) {
+            return `File exceeds ${MAX_SIZE_MB} MB.`;
+        }
+        return null;
+    }
+
+    $(function () {
+        $('#predictImageInput').on('change', function () {
+            const file = this.files[0];
+            if (!file) return;
+            const reader = new FileReader();
+            reader.onload = e => $('#imagePreview').attr('src', e.target.result).removeClass('d-none');
+            reader.readAsDataURL(file);
+        });
+
+        $('#predictForm').on('submit', function (e) {
+            e.preventDefault();
+            $('#predictError').text('');
+            $('#resultCard').addClass('d-none');
+
+            const fileInput = $('#predictImageInput')[0];
+            const file = fileInput.files[0];
+            if (!file) { $('#predictError').text('Please choose an image.'); return; }
+
+            const clientError = validateImageClientSide(file);
+            if (clientError) { $('#predictError').text(clientError); return; }
+
+            // Server-side validation (imaging.validators.validate_image_file)
+            // remains authoritative — this is a fast pre-check only.
+            const formData = new FormData();
+            formData.append('image', file);
+
+            $('#predictBtn').prop('disabled', true).text('Predicting…');
+
+            $.ajax({
+                url: '/api/classification/predict/',
+                type: 'POST',
+                data: formData,
+                processData: false,
+                contentType: false,
+                success: function (response) {
+                    const result = response.data;
+                    $('#resultClass').text(result.predicted_class);
+                    $('#resultConfidence').text((result.confidence * 100).toFixed(2) + '%');
+                    $('#resultModelVersion').text(result.model_version_label);
+
+                    const probsContainer = $('#resultProbabilities').empty();
+                    const sorted = Object.entries(result.class_probabilities)
+                        .sort((a, b) => b[1] - a[1]);
+                    sorted.forEach(([label, prob]) => {
+                        const pct = (prob * 100).toFixed(1);
+                        probsContainer.append(`
+                            <div class="mb-1">
+                                <div class="d-flex justify-content-between small">
+                                    <span>${label}</span><span>${pct}%</span>
+                                </div>
+                                <div class="progress" style="height: 6px;">
+                                    <div class="progress-bar" style="width: ${pct}%;"></div>
+                                </div>
+                            </div>`);
+                    });
+
+                    $('#resultCard').removeClass('d-none');
+                },
+                error: function (xhr) {
+                    const msg = (xhr.responseJSON && xhr.responseJSON.message) || 'Prediction failed.';
+                    $('#predictError').text(msg);
+                },
+                complete: function () {
+                    $('#predictBtn').prop('disabled', false).text('Predict');
+                }
+            });
+        });
+    });
+</script>
+{% endblock %}

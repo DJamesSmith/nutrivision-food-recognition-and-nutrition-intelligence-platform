@@ -88,12 +88,28 @@ def logout_view(request):
     return unset_jwt_cookies(response)
 
 
+# Local imports: accounts is loaded before classification/training in INSTALLED_APPS, so importing their models at module level here would
+# still work by request time, but keeping it local avoids any app-registry-ordering surprises during management commands.
 @never_cache
 @login_required(login_url='accounts:login')
 def dashboard_view(request):
+    from classification.models import Prediction
+    from training.models import TrainingJob
+    from training.services import get_active_model_version
+
+    total_predictions = Prediction.objects.filter(user=request.user).count()
+    recent_predictions = (
+        Prediction.objects.filter(user=request.user)
+        .select_related('model_version')[:5]
+    )
+    active_model = get_active_model_version()
+    latest_training_job = TrainingJob.objects.select_related('dataset').first()
+
     context = {
         'user': request.user,
-        # Populated with real data once the imaging/training/classification
-        # apps exist (Phases 3-5): total_predictions, latest_model, etc.
+        'total_predictions': total_predictions,
+        'recent_predictions': recent_predictions,
+        'active_model': active_model,
+        'latest_training_job': latest_training_job,
     }
     return render(request, 'accounts/dashboard.html', context)
