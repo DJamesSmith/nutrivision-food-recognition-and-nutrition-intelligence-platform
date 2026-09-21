@@ -1,5 +1,4 @@
 from rest_framework import serializers
-
 from .models import Prediction
 
 
@@ -9,10 +8,7 @@ class PredictionSerializer(serializers.ModelSerializer):
 
     class Meta:
         model = Prediction
-        fields = [
-            'id', 'uploaded_image_url', 'predicted_class', 'confidence',
-            'class_probabilities', 'model_version', 'model_version_label', 'created_at',
-        ]
+        fields = ['id', 'uploaded_image_url', 'predicted_class', 'confidence', 'class_probabilities', 'model_version', 'model_version_label', 'created_at']
         read_only_fields = fields
 
     def get_uploaded_image_url(self, obj):

@@ -14,19 +14,15 @@ from .services import activate_model_version
 logger = logging.getLogger(__name__)
 
 
+# Raised when a dataset is not yet suitable for training.
 class DatasetValidationError(Exception):
-    """Raised when a dataset is not yet suitable for training."""
     pass
 
 
+# Dataset Validation stage. Requires at least 2 classes (a classifier needs something to discriminate between) and a minimum number of
+# images per class (settings.MIN_IMAGES_PER_CLASS_FOR_TRAINING), so a class with a handful of images doesn't silently produce a useless model.
+# Returns the class distribution on success.
 def validate_dataset_for_training(dataset):
-    """
-    Dataset Validation stage. Requires at least 2 classes (a classifier
-    needs something to discriminate between) and a minimum number of
-    images per class (settings.MIN_IMAGES_PER_CLASS_FOR_TRAINING), so a
-    class with a handful of images doesn't silently produce a useless
-    model. Returns the class distribution on success.
-    """
     distribution = list(dataset.get_class_distribution())
 
     if len(distribution) < 2:
@@ -35,26 +31,17 @@ def validate_dataset_for_training(dataset):
             f"(found {len(distribution)})."
         )
 
-    insufficient = [
-        row for row in distribution if row['count'] < settings.MIN_IMAGES_PER_CLASS_FOR_TRAINING
-    ]
+    insufficient = [row for row in distribution if row['count'] < settings.MIN_IMAGES_PER_CLASS_FOR_TRAINING]
     if insufficient:
         labels = ", ".join(f"{row['class_label']} ({row['count']})" for row in insufficient)
-        raise DatasetValidationError(
-            f"Every class needs at least {settings.MIN_IMAGES_PER_CLASS_FOR_TRAINING} images. "
-            f"Below threshold: {labels}."
-        )
+        raise DatasetValidationError(f"Every class needs at least {settings.MIN_IMAGES_PER_CLASS_FOR_TRAINING} images. Below threshold: {labels}.")
 
     return distribution
 
 
+# Dataset Loading stage. Reads every DatasetImage row for the dataset and builds parallel (filepath, label_index) lists, plus the ordered
+# class_labels list that fixes the output-neuron ordering — this is what makes the number of output classes fully dynamic.
 def _gather_filepaths_and_labels(dataset):
-    """
-    Dataset Loading stage. Reads every DatasetImage row for the dataset
-    and builds parallel (filepath, label_index) lists, plus the ordered
-    class_labels list that fixes the output-neuron ordering — this is
-    what makes the number of output classes fully dynamic.
-    """
     class_labels = sorted(dataset.images.order_by().values_list('class_label', flat=True).distinct())
     label_to_index = {label: index for index, label in enumerate(class_labels)}
 
@@ -66,22 +53,15 @@ def _gather_filepaths_and_labels(dataset):
     return filepaths, labels, class_labels
 
 
+# Full pipeline: Dataset Loading -> Dataset Validation -> Train/Val Split -> Preprocessing -> Data Augmentation -> EfficientNetB0 -> Training ->
+# Validation -> Evaluation -> Model Saving -> Model Version Registration.
+
+# TensorFlow, NumPy and scikit-learn are imported lazily, INSIDE this function, rather than at module level. That means:
+#     - The Django web process (runserver, gunicorn, manage.py check/migrate) never needs these heavy ML dependencies installed.
+#     - Only the Celery worker process — which actually calls this function — needs the full ML stack.
+# This keeps `training/models.py`, `training/views.py`, etc. importable (and the whole project runnable/testable) without TensorFlow present.
 @log_execution_time
 def train_efficientnet(job_id):
-    """
-    Full pipeline: Dataset Loading -> Dataset Validation -> Train/Val Split
-    -> Preprocessing -> Data Augmentation -> EfficientNetB0 -> Training ->
-    Validation -> Evaluation -> Model Saving -> Model Version Registration.
-
-    TensorFlow, NumPy and scikit-learn are imported lazily, INSIDE this
-    function, rather than at module level. That means:
-      - The Django web process (runserver, gunicorn, manage.py check/
-        migrate) never needs these heavy ML dependencies installed.
-      - Only the Celery worker process — which actually calls this
-        function — needs the full ML stack.
-    This keeps `training/models.py`, `training/views.py`, etc. importable
-    (and the whole project runnable/testable) without TensorFlow present.
-    """
     job = TrainingJob.objects.select_related('dataset', 'created_by').get(pk=job_id)
 
     try:
@@ -93,10 +73,7 @@ def train_efficientnet(job_id):
         filepaths, labels, class_labels = _gather_filepaths_and_labels(job.dataset)
         num_classes = len(class_labels)
 
-        logger.info(
-            "Training job #%s: %s images across %s classes (%s).",
-            job.id, len(filepaths), num_classes, distribution,
-        )
+        logger.info("Training job #%s: %s images across %s classes (%s).", job.id, len(filepaths), num_classes, distribution)
 
         # ---- Lazy, worker-only imports ----
         import numpy as np
@@ -113,12 +90,7 @@ def train_efficientnet(job_id):
         batch_size = settings.DEFAULT_TRAINING_BATCH_SIZE
 
         # ---- Train / Validation Split ----
-        train_paths, val_paths, train_labels, val_labels = train_test_split(
-            filepaths, labels,
-            test_size=settings.DEFAULT_VALIDATION_SPLIT,
-            random_state=42,
-            stratify=labels,
-        )
+        train_paths, val_paths, train_labels, val_labels = train_test_split(filepaths, labels, test_size=settings.DEFAULT_VALIDATION_SPLIT, random_state=42, stratify=labels)
 
         # ---- Preprocessing ----
         def _load_and_resize(path, label):
@@ -146,8 +118,7 @@ def train_efficientnet(job_id):
                 )
             ds = ds.map(
                 lambda img, lbl: (preprocess_input(img), lbl),
-                num_parallel_calls=tf.data.AUTOTUNE,
-            )
+                num_parallel_calls=tf.data.AUTOTUNE)
             return ds.batch(batch_size).prefetch(tf.data.AUTOTUNE)
 
         train_ds = _build_dataset(train_paths, train_labels, training=True)
@@ -157,8 +128,7 @@ def train_efficientnet(job_id):
         backbone = EfficientNetB0(
             include_top=False,
             weights='imagenet',
-            input_shape=settings.EFFICIENTNET_INPUT_SHAPE,
-        )
+            input_shape=settings.EFFICIENTNET_INPUT_SHAPE)
         backbone.trainable = False
 
         inputs = layers.Input(shape=settings.EFFICIENTNET_INPUT_SHAPE)
@@ -168,11 +138,7 @@ def train_efficientnet(job_id):
         outputs = layers.Dense(num_classes, activation='softmax')(x)
         model = keras_models.Model(inputs, outputs, name='efficientnetb0_classifier')
 
-        model.compile(
-            optimizer=Adam(learning_rate=1e-3),
-            loss='sparse_categorical_crossentropy',
-            metrics=['accuracy'],
-        )
+        model.compile(optimizer=Adam(learning_rate=1e-3), loss='sparse_categorical_crossentropy', metrics=['accuracy'])
 
         # ---- Training (classification head only) ----
         epochs_head = job.epochs or settings.DEFAULT_TRAINING_EPOCHS_HEAD
@@ -187,12 +153,10 @@ def train_efficientnet(job_id):
             model.compile(
                 optimizer=Adam(learning_rate=1e-5),
                 loss='sparse_categorical_crossentropy',
-                metrics=['accuracy'],
-            )
+                metrics=['accuracy'])
             history = model.fit(
                 train_ds, validation_data=val_ds,
-                epochs=settings.DEFAULT_TRAINING_EPOCHS_FINE_TUNE, verbose=2,
-            )
+                epochs=settings.DEFAULT_TRAINING_EPOCHS_FINE_TUNE, verbose=2)
 
         final_train_acc = float(history.history['accuracy'][-1])
         final_val_acc = float(history.history['val_accuracy'][-1])
@@ -205,9 +169,7 @@ def train_efficientnet(job_id):
         # it doesn't let a large class dominate the score).
         val_predictions = model.predict(val_ds)
         predicted_indices = np.argmax(val_predictions, axis=1)
-        precision, recall, f1, _ = precision_recall_fscore_support(
-            val_labels, predicted_indices, average='macro', zero_division=0,
-        )
+        precision, recall, f1, _ = precision_recall_fscore_support(val_labels, predicted_indices, average='macro', zero_division=0)
 
         # ---- Model Saving ----
         version_label = f"v{ModelVersion.objects.count() + 1}"
@@ -239,24 +201,19 @@ def train_efficientnet(job_id):
             precision=float(precision),
             recall=float(recall),
             f1_score=float(f1),
-            model_path=str(model_path),
-        )
+            model_path=str(model_path))
         activate_model_version(model_version)
 
         log_event(
             AuditLog.EventType.TRAINING_COMPLETED, user=job.created_by,
             description=f"Training completed for job #{job.id} — val_accuracy={final_val_acc:.4f}.",
             reference_model='TrainingJob', reference_id=job.id,
-            metadata={'validation_accuracy': final_val_acc, 'validation_loss': final_val_loss},
-        )
+            metadata={'validation_accuracy': final_val_acc, 'validation_loss': final_val_loss})
         log_event(
             AuditLog.EventType.MODEL_UPDATED, user=job.created_by,
             description=f"Model version {version_label} trained and activated.",
-            reference_model='ModelVersion', reference_id=model_version.id,
-        )
-
+            reference_model='ModelVersion', reference_id=model_version.id)
         return model_version.id
-
     except Exception as exc:
         logger.exception("Training job #%s failed.", job_id)
         job.status = TrainingJob.Status.FAILED
@@ -267,6 +224,5 @@ def train_efficientnet(job_id):
         log_event(
             AuditLog.EventType.TRAINING_FAILED, user=job.created_by,
             description=f"Training failed for job #{job.id}: {exc}",
-            reference_model='TrainingJob', reference_id=job.id,
-        )
+            reference_model='TrainingJob', reference_id=job.id)
         raise

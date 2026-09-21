@@ -11,8 +11,7 @@ class Prediction(models.Model):
         on_delete=models.CASCADE,
         related_name='predictions')
 
-    # SET_NULL: a prediction's historical record (class, confidence, model version, timestamp) must survive even if the source image is later
-    # cleaned up from storage.
+    # SET_NULL: a prediction's historical record (class, confidence, model version, timestamp) must survive even if the source image is later cleaned up from storage.
     uploaded_image = models.ForeignKey(
         UploadedImage,
         on_delete=models.SET_NULL,
@@ -20,8 +19,7 @@ class Prediction(models.Model):
         blank=True,
         related_name='predictions')
 
-    # PROTECT: a ModelVersion that has real predictions attached to it
-    # should not be deletable — it's now part of the audit trail.
+    # PROTECT: a ModelVersion that has real predictions attached to it should not be deletable — it's now part of the audit trail.
     model_version = models.ForeignKey(
         ModelVersion,
         on_delete=models.PROTECT,

@@ -1,15 +1,12 @@
 import logging
-
 from django.core.paginator import Paginator
 from django.http import JsonResponse
 from django.views.decorators.http import require_http_methods
-
 from accounts.decorators import jwt_required, log_execution_time
 from audit.models import AuditLog
 from audit.services import log_event
 from imaging.models import UploadedImage
 from training.services import get_active_model_version
-
 from .inference import InferenceError, predict_image
 from .models import Prediction
 from .serializers import PredictionSerializer

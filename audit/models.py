@@ -17,27 +17,23 @@ class AuditLog(models.Model):
 
     event_type = models.CharField(max_length=32, choices=EventType.choices, db_index=True)
 
-    # Nullable + SET_NULL: a deleted user's audit trail must survive the
-    # user's deletion (compliance/forensics), so we never cascade-delete logs.
+    # Nullable + SET_NULL: a deleted user's audit trail must survive the user's deletion (compliance/forensics), so we never cascade-delete logs.
     user = models.ForeignKey(
         settings.AUTH_USER_MODEL,
         on_delete=models.SET_NULL,
         null=True,
         blank=True,
-        related_name='audit_logs',
-    )
+        related_name='audit_logs')
     # Preserves a human-readable identifier even after the user is gone.
     actor_identifier = models.CharField(max_length=254, blank=True)
 
     description = models.CharField(max_length=500, blank=True)
     ip_address = models.GenericIPAddressField(null=True, blank=True)
 
-    # Free-form, non-sensitive contextual data (e.g. {"model_version": "v3"}).
-    # Never store passwords, tokens, or other credential material here.
+    # Free-form, non-sensitive contextual data (e.g. {"model_version": "v3"}). Never store passwords, tokens, or other credential material here.
     metadata = models.JSONField(default=dict, blank=True)
 
-    # Loose reference to whatever object the event concerns (a prediction id,
-    # a training job id, ...) without requiring a hard FK/contenttypes
+    # Loose reference to whatever object the event concerns (a prediction id, a training job id, ...) without requiring a hard FK/contenttypes
     # dependency across apps that may not exist yet in earlier phases.
     reference_model = models.CharField(max_length=100, blank=True)
     reference_id = models.CharField(max_length=64, blank=True)

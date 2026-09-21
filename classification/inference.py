@@ -2,15 +2,13 @@ import logging
 
 logger = logging.getLogger(__name__)
 
-# Keeps at most one Keras model resident in memory per process — the
-# currently-active one. Avoids re-loading the model artifact from disk on
-# every single prediction request, while never letting stale versions
-# accumulate in memory after an admin activates a different one.
+# Keeps at most one Keras model resident in memory per process — the currently-active one. Avoids re-loading the model artifact from disk on
+# every single prediction request, while never letting stale versions accumulate in memory after an admin activates a different one.
 _MODEL_CACHE = {}
 
 
+# Raised when the active model artifact cannot be loaded or run.
 class InferenceError(Exception):
-    """Raised when the active model artifact cannot be loaded or run."""
     pass
 
 
@@ -36,20 +34,14 @@ def _load_keras_model(model_version):
     return model
 
 
+# Preprocessing -> Load Active Model -> Prediction -> Class Probabilities -> Highest Probability Class.
+
+# TensorFlow/NumPy are imported lazily inside this function for the same reason as training.ml_pipeline: `manage.py check`/migrate and the rest
+# of the Django project stay importable without the ML stack installed; only a request that actually reaches this function needs it. Any
+# import failure is converted to InferenceError so the API always returns a clean JSON error instead of an unhandled 500.
+
+# Returns (predicted_class: str, confidence: float, probabilities: dict).
 def predict_image(image_path, model_version):
-    """
-    Preprocessing -> Load Active Model -> Prediction -> Class Probabilities
-    -> Highest Probability Class.
-
-    TensorFlow/NumPy are imported lazily inside this function for the same
-    reason as training.ml_pipeline: `manage.py check`/migrate and the rest
-    of the Django project stay importable without the ML stack installed;
-    only a request that actually reaches this function needs it. Any
-    import failure is converted to InferenceError so the API always
-    returns a clean JSON error instead of an unhandled 500.
-
-    Returns (predicted_class: str, confidence: float, probabilities: dict).
-    """
     from django.conf import settings
 
     if not model_version.class_labels:
