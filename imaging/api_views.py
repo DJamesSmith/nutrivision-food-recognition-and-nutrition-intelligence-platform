@@ -1,9 +1,7 @@
 import logging
-
 from django.http import JsonResponse
 from django.shortcuts import get_object_or_404
 from django.views.decorators.http import require_http_methods
-
 from accounts.decorators import jwt_required, log_execution_time, staff_required
 from audit.models import AuditLog
 from audit.services import log_event

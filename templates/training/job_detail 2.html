@@ -34,26 +34,34 @@
         return 'bg-secondary';
     }
 
-    function renderJob(job) {
-        $('#statusBadge').text(job.status).attr('class', 'badge ' + badgeClass(job.status));
-        $('#mAcc').text(job.accuracy !== null ? job.accuracy.toFixed(4) : '—');
-        $('#mValAcc').text(job.validation_accuracy !== null ? job.validation_accuracy.toFixed(4) : '—');
-        $('#mLoss').text(job.loss !== null ? job.loss.toFixed(4) : '—');
-        $('#mValLoss').text(job.validation_loss !== null ? job.validation_loss.toFixed(4) : '—');
+    let pollHandle = null;
 
-        if (job.error_message) {
-            $('#errorBox').removeClass('d-none').text(job.error_message);
-        }
+    function poll() {
+        $.ajax({
+            url: `/api/training/jobs/${JOB_ID}/`,
+            type: 'GET',
+            success: function (response) {
+                const job = response.data;
+                $('#statusBadge').text(job.status).attr('class', 'badge ' + badgeClass(job.status));
+                $('#mAcc').text(job.accuracy !== null ? job.accuracy.toFixed(4) : '—');
+                $('#mValAcc').text(job.validation_accuracy !== null ? job.validation_accuracy.toFixed(4) : '—');
+                $('#mLoss').text(job.loss !== null ? job.loss.toFixed(4) : '—');
+                $('#mValLoss').text(job.validation_loss !== null ? job.validation_loss.toFixed(4) : '—');
+
+                if (job.error_message) {
+                    $('#errorBox').removeClass('d-none').text(job.error_message);
+                }
+                if (job.status === 'COMPLETED' || job.status === 'FAILED') {
+                    clearInterval(pollHandle);
+                }
+            }
+        });
     }
 
     $(function () {
         const initialStatus = $('#statusBadge').text().trim();
         if (initialStatus !== 'COMPLETED' && initialStatus !== 'FAILED') {
-            NV.pollUntil(`/api/training/jobs/${JOB_ID}/`, {
-                onData: renderJob,
-                isTerminal: job => job.status === 'COMPLETED' || job.status === 'FAILED',
-                intervalMs: 4000,
-            });
+            pollHandle = setInterval(poll, 4000);
         }
     });
 </script>

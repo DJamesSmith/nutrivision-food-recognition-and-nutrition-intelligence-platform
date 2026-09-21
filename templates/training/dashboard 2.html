@@ -92,7 +92,7 @@
             if (!datasetId) { $('#trainError').text('Please select a dataset.'); return; }
             if (!epochs || epochs <= 0) { $('#trainError').text('Epochs must be a positive number.'); return; }
 
-            NV.setButtonLoading('#trainBtn', 'Queuing…');
+            $('#trainBtn').prop('disabled', true).text('Queuing…');
 
             $.ajax({
                 url: '/api/training/train/',
@@ -105,10 +105,11 @@
                     setTimeout(() => window.location.reload(), 1200);
                 },
                 error: function (xhr) {
-                    $('#trainError').text(NV.ajaxErrorMessage(xhr, 'Failed to queue training.'));
+                    const msg = (xhr.responseJSON && xhr.responseJSON.message) || 'Failed to queue training.';
+                    $('#trainError').text(msg);
                 },
                 complete: function () {
-                    NV.resetButton('#trainBtn');
+                    $('#trainBtn').prop('disabled', false).text('Queue Training');
                 }
             });
         });
@@ -124,7 +125,7 @@
                     window.location.reload();
                 },
                 error: function (xhr) {
-                    alert(NV.ajaxErrorMessage(xhr, 'Activation failed.'));
+                    alert((xhr.responseJSON && xhr.responseJSON.message) || 'Activation failed.');
                 }
             });
         });

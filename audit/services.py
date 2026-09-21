@@ -1,5 +1,4 @@
 import logging
-
 from .models import AuditLog
 
 logger = logging.getLogger(__name__)
@@ -14,17 +13,10 @@ def get_client_ip(request):
     return request.META.get('REMOTE_ADDR')
 
 
-def log_event(event_type, user=None, request=None, description='', metadata=None,
-              actor_identifier='', reference_model='', reference_id=''):
-    """
-    Single write path for audit entries. Called either indirectly (via the
-    signal receivers in audit.receivers, wired to accounts' auth signals)
-    or directly by other apps (imaging/training/classification in later
-    phases) for events that don't warrant a dedicated signal.
-
-    Never pass passwords, JWT secrets, or other credential material in
-    `metadata` or `description` — this function does not scrub input.
-    """
+# Single write path for audit entries. Called either indirectly (via the signal receivers in audit.receivers, wired to accounts' auth signals)
+# or directly by other apps (imaging/training/classification in later phases) for events that don't warrant a dedicated signal.
+# Never pass passwords, JWT secrets, or other credential material in `metadata` or `description` — this function does not scrub input.
+def log_event(event_type, user=None, request=None, description='', metadata=None, actor_identifier='', reference_model='', reference_id=''):
     try:
         AuditLog.objects.create(
             event_type=event_type,
@@ -34,9 +26,7 @@ def log_event(event_type, user=None, request=None, description='', metadata=None
             ip_address=get_client_ip(request),
             metadata=metadata or {},
             reference_model=reference_model,
-            reference_id=str(reference_id) if reference_id else '',
-        )
+            reference_id=str(reference_id) if reference_id else '')
     except Exception:
-        # Audit logging must never break the primary request/task. Log the
-        # failure to the application logger instead of raising.
+        # Audit logging must never break the primary request/task. Log the failure to the application logger instead of raising.
         logger.exception("Failed to write audit log entry for event_type=%s", event_type)

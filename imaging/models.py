@@ -89,9 +89,7 @@ class UploadedImage(models.Model):
     class Meta:
         db_table = 'imaging_uploaded_image'
         ordering = ['-created_at']
-        indexes = [
-            models.Index(fields=['user', '-created_at']),
-        ]
+        indexes = [models.Index(fields=['user', '-created_at'])]
 
     def __str__(self):
         return f"{self.user_id} / {self.image.name}"

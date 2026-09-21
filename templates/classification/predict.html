@@ -33,27 +33,9 @@
 
 {% block extra_js %}
 <script>
-    const ALLOWED_EXTENSIONS = ['.jpg', '.jpeg', '.png', '.webp'];
-    const MAX_SIZE_MB = 10;
-
-    function validateImageClientSide(file) {
-        const ext = '.' + file.name.toLowerCase().split('.').pop();
-        if (!ALLOWED_EXTENSIONS.includes(ext)) {
-            return `Unsupported file type. Allowed: ${ALLOWED_EXTENSIONS.join(', ')}`;
-        }
-        if (file.size > MAX_SIZE_MB * 1024 * 1024) {
-            return `File exceeds ${MAX_SIZE_MB} MB.`;
-        }
-        return null;
-    }
-
     $(function () {
         $('#predictImageInput').on('change', function () {
-            const file = this.files[0];
-            if (!file) return;
-            const reader = new FileReader();
-            reader.onload = e => $('#imagePreview').attr('src', e.target.result).removeClass('d-none');
-            reader.readAsDataURL(file);
+            NV.previewImage(this, '#imagePreview');
         });
 
         $('#predictForm').on('submit', function (e) {
@@ -63,9 +45,7 @@
 
             const fileInput = $('#predictImageInput')[0];
             const file = fileInput.files[0];
-            if (!file) { $('#predictError').text('Please choose an image.'); return; }
-
-            const clientError = validateImageClientSide(file);
+            const clientError = NV.validateImageFile(file);
             if (clientError) { $('#predictError').text(clientError); return; }
 
             // Server-side validation (imaging.validators.validate_image_file)
@@ -73,7 +53,7 @@
             const formData = new FormData();
             formData.append('image', file);
 
-            $('#predictBtn').prop('disabled', true).text('Predicting…');
+            NV.setButtonLoading('#predictBtn', 'Predicting…');
 
             $.ajax({
                 url: '/api/classification/predict/',
@@ -106,11 +86,10 @@
                     $('#resultCard').removeClass('d-none');
                 },
                 error: function (xhr) {
-                    const msg = (xhr.responseJSON && xhr.responseJSON.message) || 'Prediction failed.';
-                    $('#predictError').text(msg);
+                    $('#predictError').text(NV.ajaxErrorMessage(xhr, 'Prediction failed.'));
                 },
                 complete: function () {
-                    $('#predictBtn').prop('disabled', false).text('Predict');
+                    NV.resetButton('#predictBtn');
                 }
             });
         });
