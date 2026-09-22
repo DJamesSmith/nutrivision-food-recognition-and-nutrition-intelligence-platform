@@ -258,8 +258,10 @@ LOGGING = {
 
 # Dataset taken from:
 # https://www.kaggle.com/datasets/dansbecker/food-101
+# https://www.kaggle.com/datasets/trolukovich/food11-image-dataset
 
 # NOTE:
+# psql -U django_user -d nutrivision_db
 # CREATE DATABASE nutrivision_db OWNER django_user;
 
 # Run this command for running on localhost in flutter app (Means: Django, listen for connections coming through any network interface on port 8000):
@@ -271,6 +273,9 @@ LOGGING = {
 # This change is to be made in flutter app's baseurl, django's settings.py
 
 # python manage.py import_food101 /Users/user/Desktop/Datasets/food-101/images --owner-email admin@gmail.com --dataset-name "food-101" --limit-per-class 100
+# python manage.py import_food101 /Users/user/Desktop/Datasets/food-102/training --owner-email admin@gmail.com --dataset-name "food-102" --limit-per-class 100
 
 # redis-server
 # celery -A nutrivision_food_recognition worker -l info
+
+# source ../learning_django/env_image_classification_main/env_image_processing/bin/activate
