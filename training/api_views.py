@@ -64,8 +64,7 @@ def train_api(request):
     job = TrainingJob.objects.create(
         dataset=dataset,
         epochs=epochs or settings.DEFAULT_TRAINING_EPOCHS_HEAD,
-        created_by=request.user,
-    )
+        created_by=request.user)
 
     # Training must NOT execute inside this request — queue it and return
     # immediately with the task id.

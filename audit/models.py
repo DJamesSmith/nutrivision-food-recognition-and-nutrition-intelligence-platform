@@ -18,12 +18,7 @@ class AuditLog(models.Model):
     event_type = models.CharField(max_length=32, choices=EventType.choices, db_index=True)
 
     # Nullable + SET_NULL: a deleted user's audit trail must survive the user's deletion (compliance/forensics), so we never cascade-delete logs.
-    user = models.ForeignKey(
-        settings.AUTH_USER_MODEL,
-        on_delete=models.SET_NULL,
-        null=True,
-        blank=True,
-        related_name='audit_logs')
+    user = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.SET_NULL, null=True, blank=True, related_name='audit_logs')                     # ForeignKey
     # Preserves a human-readable identifier even after the user is gone.
     actor_identifier = models.CharField(max_length=254, blank=True)
 

@@ -6,24 +6,13 @@ from training.models import ModelVersion
 
 
 class Prediction(models.Model):
-    user = models.ForeignKey(
-        settings.AUTH_USER_MODEL,
-        on_delete=models.CASCADE,
-        related_name='predictions')
+    user = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.CASCADE, related_name='predictions')                                        # ForeignKey
 
     # SET_NULL: a prediction's historical record (class, confidence, model version, timestamp) must survive even if the source image is later cleaned up from storage.
-    uploaded_image = models.ForeignKey(
-        UploadedImage,
-        on_delete=models.SET_NULL,
-        null=True,
-        blank=True,
-        related_name='predictions')
+    uploaded_image = models.ForeignKey(UploadedImage, on_delete=models.SET_NULL, null=True, blank=True, related_name='predictions')                 # ForeignKey
 
     # PROTECT: a ModelVersion that has real predictions attached to it should not be deletable — it's now part of the audit trail.
-    model_version = models.ForeignKey(
-        ModelVersion,
-        on_delete=models.PROTECT,
-        related_name='predictions')
+    model_version = models.ForeignKey(ModelVersion, on_delete=models.PROTECT, related_name='predictions')                                           # ForeignKey
 
     predicted_class = models.CharField(max_length=150)
     confidence = models.FloatField()

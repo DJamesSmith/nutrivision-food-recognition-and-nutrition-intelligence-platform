@@ -24,11 +24,7 @@ class Dataset(models.Model):
     description = models.TextField(blank=True)
     status = models.CharField(max_length=16, choices=Status.choices, default=Status.DRAFT)
 
-    created_by = models.ForeignKey(
-        settings.AUTH_USER_MODEL,
-        on_delete=models.SET_NULL,
-        null=True,
-        related_name='created_datasets')
+    created_by = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.SET_NULL, null=True, related_name='created_datasets')                 # ForeignKey
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
 
@@ -53,15 +49,10 @@ class Dataset(models.Model):
 
 
 class DatasetImage(models.Model):
-    dataset = models.ForeignKey(Dataset, on_delete=models.CASCADE, related_name='images')
+    dataset = models.ForeignKey(Dataset, on_delete=models.CASCADE, related_name='images')                                                           # ForeignKey
     image = models.ImageField(upload_to=dataset_image_upload_path, validators=[validate_image_file])
     class_label = models.CharField(max_length=100, db_index=True)
-
-    uploaded_by = models.ForeignKey(
-        settings.AUTH_USER_MODEL,
-        on_delete=models.SET_NULL,
-        null=True,
-        related_name='uploaded_dataset_images')
+    uploaded_by = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.SET_NULL, null=True, related_name='uploaded_dataset_images')         # ForeignKey
     created_at = models.DateTimeField(auto_now_add=True)
 
     class Meta:
@@ -76,10 +67,7 @@ class DatasetImage(models.Model):
 # General-purpose uploaded image, independent of any training dataset. Used for on-demand uploads such as prediction requests:
 # the classification app (Phase 5) references this model rather than duplicating upload/validation/cleanup logic.
 class UploadedImage(models.Model):
-    user = models.ForeignKey(
-        settings.AUTH_USER_MODEL,
-        on_delete=models.CASCADE,
-        related_name='uploaded_images')
+    user = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.CASCADE, related_name='uploaded_images')                                    # ForeignKey
     image = models.ImageField(upload_to=uploaded_image_upload_path, validators=[validate_image_file])
     original_filename = models.CharField(max_length=255, blank=True)
     content_type = models.CharField(max_length=100, blank=True)

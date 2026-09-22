@@ -72,7 +72,10 @@ class Command(BaseCommand):
         else:
             dataset, created = Dataset.objects.get_or_create(
                 name=options['dataset_name'],
-                defaults={'description': options['description'], 'created_by': owner})
+                defaults={
+                    'description': options['description'],
+                    'created_by': owner
+                })
             self.stdout.write(f"Dataset    : '{dataset.name}' (id={dataset.id}, {'created' if created else 'existing'})")
 
         totals = {'imported': 0, 'skipped_existing': 0, 'invalid': 0}

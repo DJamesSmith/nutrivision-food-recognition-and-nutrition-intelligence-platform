@@ -73,6 +73,9 @@ tensorboard/
 celerybeat-schedule
 celerybeat.pid
 
+# Redis
+dump.rdb
+
 # Coverage / Testing
 .coverage
 .coverage.*
