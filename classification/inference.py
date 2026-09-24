@@ -16,19 +16,14 @@ def _load_keras_model(model_version):
     cached = _MODEL_CACHE.get(model_version.id)
     if cached is not None:
         return cached
-
     try:
         import tensorflow as tf
     except ImportError as exc:
         raise InferenceError(f"TensorFlow is not available on this server: {exc}")
-
     try:
         model = tf.keras.models.load_model(model_version.model_path)
     except (OSError, ValueError) as exc:
-        raise InferenceError(
-            f"Could not load model artifact for version '{model_version.version}': {exc}"
-        )
-
+        raise InferenceError(f"Could not load model artifact for version '{model_version.version}': {exc}")
     _MODEL_CACHE.clear()
     _MODEL_CACHE[model_version.id] = model
     return model
