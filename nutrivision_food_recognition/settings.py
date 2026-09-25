@@ -99,7 +99,7 @@ MEDIA_ROOT = BASE_DIR / "media"
 # Sub-structure (created automatically by each model's upload_to path):
 #   media/datasets/<dataset_id>/<class_label>/...   (imaging.DatasetImage)
 #   media/uploaded_images/<user_id>/...             (imaging.UploadedImage)
-#   media/predictions/                              -> Phase 5 (classification app)
+#   media/predictions/                              -> classification app
 
 # Shared image-upload constraints, enforced by imaging.validators
 # (used by both the ModelForm and the DRF serializer paths).
@@ -181,15 +181,14 @@ REFRESH_TOKEN_LIFETIME_DAYS = int(os.getenv("REFRESH_TOKEN_LIFETIME_DAYS"))
 JWT_ACCESS_COOKIE_NAME = "access_token"
 JWT_REFRESH_COOKIE_NAME = "refresh_token"
 
-# Cookies must be Secure in production (HTTPS). Kept False here because local
-# dev over plain http:// on a LAN IP (192.168.0.105) is not HTTPS.
+# Cookies must be Secure in production (HTTPS). Kept False here because local dev over plain http:// on a LAN IP (192.168.0.105) is not HTTPS.
 JWT_COOKIE_SECURE = not DEBUG
 JWT_COOKIE_HTTPONLY = True
 JWT_COOKIE_SAMESITE = "Lax"
 
 # ------------------------------- REDIS - CELERY -------------------------------
 
-# REDIS / CELERY (wired up in Phase 4 — kept here so env is ready)
+# REDIS / CELERY
 REDIS_URL = os.getenv("REDIS_URL")
 CELERY_BROKER_URL = os.getenv("CELERY_BROKER_URL")
 CELERY_RESULT_BACKEND = os.getenv("CELERY_RESULT_BACKEND")
@@ -198,17 +197,14 @@ CELERY_TASK_SERIALIZER = 'json'
 CELERY_RESULT_SERIALIZER = 'json'
 CELERY_TIMEZONE = TIME_ZONE
 CELERY_TASK_TRACK_STARTED = True
-# Safety ceiling: EfficientNetB0 training jobs are long-running but must
-# not be allowed to hang a worker forever.
-CELERY_TASK_TIME_LIMIT = 60 * 60 * 6  # 6 hours
-CELERY_WORKER_PREFETCH_MULTIPLIER = 1  # one training job per worker slot at a time
+# Safety ceiling: EfficientNetB0 training jobs are long-running but must not be allowed to hang a worker forever.
+CELERY_TASK_TIME_LIMIT = 60 * 60 * 6    # 6 hours
+CELERY_WORKER_PREFETCH_MULTIPLIER = 1   # one training job per worker slot at a time
 
 # ----------------- MACHINE LEARNING / EFFICIENTNETB0 TRAINING -----------------
 
-# Trained model artifacts live outside MEDIA_ROOT — they are never
-# directly served/downloaded, only loaded by the prediction pipeline via
-# ModelVersion.model_path (training.services.get_active_model_version()),
-# so no path is ever hard-coded elsewhere in the project.
+# Trained model artifacts live outside MEDIA_ROOT — they are never directly served/downloaded, only loaded by the prediction pipeline via
+# ModelVersion.model_path (training.services.get_active_model_version()), so no path is ever hard-coded elsewhere in the project.
 TRAINED_MODELS_DIR = BASE_DIR / "trained_models"
 TRAINED_MODELS_DIR.mkdir(exist_ok=True)
 
@@ -220,9 +216,7 @@ DEFAULT_TRAINING_EPOCHS_HEAD = 10
 DEFAULT_TRAINING_EPOCHS_FINE_TUNE = 5
 DEFAULT_VALIDATION_SPLIT = 0.2
 
-# A class needs at least this many images before a dataset is considered
-# trainable — keeps a lopsided/incomplete dataset from silently producing
-# a useless model.
+# A class needs at least this many images before a dataset is considered trainable — keeps a lopsided/incomplete dataset from silently producing a useless model.
 MIN_IMAGES_PER_CLASS_FOR_TRAINING = 10
 
 # ----------------------------------- LOGGING -----------------------------------

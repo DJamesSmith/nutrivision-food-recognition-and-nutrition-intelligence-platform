@@ -1,6 +1,6 @@
 import django.dispatch
 
-# Custom signals dispatched by accounts.views / accounts.api_views. accounts intentionally has no knowledge of the audit app: the Phase 2
+# Custom signals dispatched by accounts.views / accounts.api_views. accounts intentionally has no knowledge of the audit app.
 # "audit" app will import these and connect a receiver that writes an AuditLog row, keeping the two apps decoupled.
 
 user_registered = django.dispatch.Signal()          # kwargs: user, request

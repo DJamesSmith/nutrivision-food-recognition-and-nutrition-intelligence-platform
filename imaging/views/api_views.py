@@ -109,7 +109,7 @@ def dataset_image_delete_api(request, dataset_id, image_id):
 
 
 # General-purpose image upload for any authenticated user (not just staff) — e.g. the image a user wants classified.
-# The classification app (Phase 5) will accept an UploadedImage id in its predict endpoint.
+# The classification app will accept an UploadedImage id in its predict endpoint.
 # POST /api/imaging/images/upload/
 @require_http_methods(["POST"])
 @jwt_required

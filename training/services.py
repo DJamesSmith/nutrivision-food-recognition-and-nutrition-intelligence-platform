@@ -2,8 +2,7 @@ from django.db import transaction
 from .models import ModelVersion
 
 
-# The single lookup point for 'which model should be used for prediction right now'. The classification app (Phase 5) calls this
-# instead of hard-coding any model path.
+# The single lookup point for 'which model should be used for prediction right now'. The classification app calls this instead of hard-coding any model path.
 def get_active_model_version():
     return ModelVersion.objects.filter(is_active=True).order_by('-created_at').first()
 

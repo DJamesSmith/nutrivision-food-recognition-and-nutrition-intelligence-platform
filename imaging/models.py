@@ -65,7 +65,7 @@ class DatasetImage(models.Model):
 
 
 # General-purpose uploaded image, independent of any training dataset. Used for on-demand uploads such as prediction requests:
-# the classification app (Phase 5) references this model rather than duplicating upload/validation/cleanup logic.
+# the classification app references this model rather than duplicating upload/validation/cleanup logic.
 class UploadedImage(models.Model):
     user = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.CASCADE, related_name='uploaded_images')                                    # ForeignKey
     image = models.ImageField(upload_to=uploaded_image_upload_path, validators=[validate_image_file])
