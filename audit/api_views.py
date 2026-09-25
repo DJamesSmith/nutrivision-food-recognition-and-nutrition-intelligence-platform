@@ -1,9 +1,7 @@
 from django.core.paginator import Paginator
 from django.http import JsonResponse
 from django.views.decorators.http import require_http_methods
-
 from accounts.decorators import jwt_required, staff_required
-
 from .models import AuditLog
 from .serializers import AuditLogSerializer
 
