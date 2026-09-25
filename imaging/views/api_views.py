@@ -6,8 +6,8 @@ from accounts.decorators import jwt_required, log_execution_time, staff_required
 from audit.models import AuditLog
 from audit.services import log_event
 
-from .models import Dataset, DatasetImage, UploadedImage
-from .serializers import DatasetImageSerializer, DatasetSerializer, UploadedImageSerializer
+from ..models import Dataset, DatasetImage, UploadedImage
+from ..serializers import DatasetImageSerializer, DatasetSerializer, UploadedImageSerializer
 
 logger = logging.getLogger(__name__)
 

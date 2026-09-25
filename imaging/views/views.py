@@ -2,8 +2,8 @@ from django.contrib import messages
 from django.contrib.auth.decorators import login_required, user_passes_test
 from django.shortcuts import get_object_or_404, redirect, render
 from django.views.decorators.cache import never_cache
-from .forms import DatasetForm
-from .models import Dataset
+from ..forms import DatasetForm
+from ..models import Dataset
 
 
 def _is_staff(user):

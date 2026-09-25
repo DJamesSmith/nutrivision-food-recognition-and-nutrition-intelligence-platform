@@ -1,6 +1,5 @@
 from django.conf import settings
 from django.db import models
-
 from imaging.models import UploadedImage
 from training.models import ModelVersion
 

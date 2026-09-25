@@ -7,9 +7,9 @@ from audit.models import AuditLog
 from audit.services import log_event
 from imaging.models import UploadedImage
 from training.services import get_active_model_version
-from .inference import InferenceError, predict_image
-from .models import Prediction
-from .serializers import PredictionSerializer
+from ..inference import InferenceError, predict_image
+from ..models import Prediction
+from ..serializers import PredictionSerializer
 
 logger = logging.getLogger(__name__)
 

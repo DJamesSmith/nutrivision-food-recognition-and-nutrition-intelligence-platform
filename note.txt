@@ -1,1 +1,96 @@
 dump.rdb is a Redis database snapshot containing persisted Redis data. It's a runtime/generated file, not source code.
+
+settings.py
+--------------------------------------------------
+
+# .strip().lower() so "False", "false", " False " (any of these easy to end
+# up with in a .env file) are all read correctly. The previous version of
+# this line — `DEBUG = os.getenv("DEBUG")` — was a real bug: os.getenv()
+# returns the raw string, and a non-empty string is always truthy in
+# Python, so setting DEBUG=False in .env would silently leave Django running
+# in debug mode (verbose error pages, full tracebacks, settings dumps —
+# all shown to visitors) instead of turning it off. This is exactly the
+# kind of misconfiguration "security hardening" exists to catch.
+DEBUG = os.getenv("DEBUG", "True").strip().lower() == "true"
+
+
+--------------------------------------------------
+# Defaults here match what this project has always run with locally: keep
+# working out of the box, but make it fully overridable per-environment via
+# .env instead of requiring a code change for every new deployment host.
+ALLOWED_HOSTS = [
+    h.strip() for h in os.getenv("ALLOWED_HOSTS", "127.0.0.1,localhost,192.168.0.105").split(",")
+    if h.strip()
+]
+
+--------------------------------------------------
+
+# Only needed for cross-origin form/API POSTs (e.g. a separately-hosted
+# frontend submitting to this API over HTTPS). Empty by default — same-
+# origin requests (the browser pages this project itself serves) never
+# need it.
+CSRF_TRUSTED_ORIGINS = [o.strip() for o in os.getenv("CSRF_TRUSTED_ORIGINS", "").split(",") if o.strip()]
+--------------------------------------------------
+
+
+# Rejects oversized multipart request bodies at the Django/WSGI level
+# (RequestDataTooBig, HTTP 400) instead of only catching them after the
+# fact in imaging.validators — a small buffer over the largest legitimate
+# image upload, not a second independent limit to keep in sync by hand.
+DATA_UPLOAD_MAX_MEMORY_SIZE = (MAX_IMAGE_UPLOAD_SIZE_MB + 2) * 1024 * 1024
+FILE_UPLOAD_MAX_MEMORY_SIZE = DATA_UPLOAD_MAX_MEMORY_SIZE
+
+--------------------------------------------------
+
+
+# The correct Django setting is EMAIL_BACKEND (a string) — the earlier
+# `MAILERS = {...}` dict here was never a real Django setting and Django
+# silently ignored it, falling back to its own SMTP default. Caught via
+# `manage.py check --deploy`'s mail.E001. Console backend for local dev;
+# point EMAIL_BACKEND (and the SMTP settings below) at a real provider for
+# production via .env.
+EMAIL_BACKEND = os.getenv("EMAIL_BACKEND", "django.core.mail.backends.console.EmailBackend")
+EMAIL_HOST = os.getenv("EMAIL_HOST", "")
+EMAIL_PORT = int(os.getenv("EMAIL_PORT", "587"))
+EMAIL_USE_TLS = os.getenv("EMAIL_USE_TLS", "True").strip().lower() == "true"
+EMAIL_HOST_USER = os.getenv("EMAIL_HOST_USER", "")
+EMAIL_HOST_PASSWORD = os.getenv("EMAIL_HOST_PASSWORD", "")
+DEFAULT_FROM_EMAIL = os.getenv("DEFAULT_FROM_EMAIL", "noreply@nutrivision.local")
+
+
+
+
+# ------------------------------- TRANSPORT / COOKIE SECURITY -------------------------------
+
+# Single source of truth for "should cookies require HTTPS". Defaults to
+# the inverse of DEBUG (same behavior this project has always had) but is
+# independently overridable — e.g. a staging server behind a TLS-terminating
+# proxy that still runs Django with DEBUG=True for now.
+SECURE_COOKIES = os.getenv("SECURE_COOKIES", str(not DEBUG)).strip().lower() == "true"
+
+SESSION_COOKIE_SECURE = SECURE_COOKIES
+SESSION_COOKIE_HTTPONLY = True
+SESSION_COOKIE_SAMESITE = 'Lax'
+
+CSRF_COOKIE_SECURE = SECURE_COOKIES
+# MUST stay False: static/js/script.js reads document.cookie for
+# 'csrftoken' and sends it back as the X-CSRFToken header on every non-GET
+# jQuery AJAX call (see NV.* / $.ajaxSetup in script.js). Setting this True
+# would silently break every AJAX upload/predict/train request in the app.
+CSRF_COOKIE_HTTPONLY = False
+CSRF_COOKIE_SAMESITE = 'Lax'
+
+# Defense-in-depth headers with safe, non-breaking defaults.
+SECURE_CONTENT_TYPE_NOSNIFF = True
+SECURE_REFERRER_POLICY = 'same-origin'
+X_FRAME_OPTIONS = 'DENY'  # nothing in this app is meant to be embedded in an iframe
+
+# Off by default so plain-http local/LAN development (e.g. the
+# 192.168.0.105 Flutter-app setup) keeps working unchanged. Only turn these
+# on once HTTPS is actually terminated in front of this app (a real
+# certificate, not just DEBUG=False) — enabling SECURE_SSL_REDIRECT without
+# working HTTPS in front of it will make the site completely unreachable.
+SECURE_SSL_REDIRECT = os.getenv("SECURE_SSL_REDIRECT", "False").strip().lower() == "true"
+SECURE_HSTS_SECONDS = int(os.getenv("SECURE_HSTS_SECONDS", "0"))
+SECURE_HSTS_INCLUDE_SUBDOMAINS = SECURE_HSTS_SECONDS > 0
+SECURE_HSTS_PRELOAD = SECURE_HSTS_SECONDS > 0

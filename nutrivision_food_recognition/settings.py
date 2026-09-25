@@ -6,8 +6,9 @@ BASE_DIR = Path(__file__).resolve().parent.parent
 
 load_dotenv(BASE_DIR / ".env")
 SECRET_KEY = os.getenv("SECRET_KEY")
-DEBUG = os.getenv("DEBUG")
+DEBUG = os.getenv("DEBUG", "True").strip().lower() == "true"
 ALLOWED_HOSTS = ['127.0.0.1', 'localhost', '192.168.0.105']
+CSRF_TRUSTED_ORIGINS = [o.strip() for o in os.getenv("CSRF_TRUSTED_ORIGINS", "").split(",") if o.strip()]
 
 AUTH_USER_MODEL = 'accounts.User'
 
@@ -105,6 +106,9 @@ MEDIA_ROOT = BASE_DIR / "media"
 ALLOWED_IMAGE_EXTENSIONS = ['.jpg', '.jpeg', '.png', '.webp']
 MAX_IMAGE_UPLOAD_SIZE_MB = 10
 
+DATA_UPLOAD_MAX_MEMORY_SIZE = (MAX_IMAGE_UPLOAD_SIZE_MB + 2) * 1024 * 1024
+FILE_UPLOAD_MAX_MEMORY_SIZE = DATA_UPLOAD_MAX_MEMORY_SIZE
+
 DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
 
 MAILERS = {
@@ -112,6 +116,14 @@ MAILERS = {
         'BACKEND': 'django.core.mail.backends.console.EmailBackend',
     },
 }
+
+EMAIL_BACKEND = os.getenv("EMAIL_BACKEND", "django.core.mail.backends.console.EmailBackend")
+EMAIL_HOST = os.getenv("EMAIL_HOST", "")
+EMAIL_PORT = int(os.getenv("EMAIL_PORT", "587"))
+EMAIL_USE_TLS = os.getenv("EMAIL_USE_TLS", "True").strip().lower() == "true"
+EMAIL_HOST_USER = os.getenv("EMAIL_HOST_USER", "")
+EMAIL_HOST_PASSWORD = os.getenv("EMAIL_HOST_PASSWORD", "")
+DEFAULT_FROM_EMAIL = os.getenv("DEFAULT_FROM_EMAIL", "noreply@nutrivision.local")
 
 # DJANGO REST FRAMEWORK
 # Authentication for browsable-API/admin convenience only. Actual API auth is enforced explicitly via accounts.decorators.jwt_required on each api_views.py function, per architectural requirement.
@@ -133,6 +145,30 @@ CORS_ALLOWED_ORIGINS = [
     if origin.strip()
 ]
 CORS_ALLOW_CREDENTIALS = True
+
+# ------------------------------- TRANSPORT / COOKIE SECURITY -------------------------------
+
+SECURE_COOKIES = os.getenv("SECURE_COOKIES", str(not DEBUG)).strip().lower() == "true"
+
+SESSION_COOKIE_SECURE = SECURE_COOKIES
+SESSION_COOKIE_HTTPONLY = True
+SESSION_COOKIE_SAMESITE = 'Lax'
+
+CSRF_COOKIE_SECURE = SECURE_COOKIES
+CSRF_COOKIE_HTTPONLY = False
+CSRF_COOKIE_SAMESITE = 'Lax'
+
+
+SECURE_CONTENT_TYPE_NOSNIFF = True
+SECURE_REFERRER_POLICY = 'same-origin'
+X_FRAME_OPTIONS = 'DENY'  # nothing in this app is meant to be embedded in an iframe
+
+SECURE_SSL_REDIRECT = os.getenv("SECURE_SSL_REDIRECT", "False").strip().lower() == "true"
+SECURE_HSTS_SECONDS = int(os.getenv("SECURE_HSTS_SECONDS", "0"))
+SECURE_HSTS_INCLUDE_SUBDOMAINS = SECURE_HSTS_SECONDS > 0
+SECURE_HSTS_PRELOAD = SECURE_HSTS_SECONDS > 0
+
+# ------------------------------- JWT -------------------------------
 
 # JWT CONFIGURATION (custom implementation — see accounts/utils.py)
 JWT_SECRET_KEY = os.getenv("JWT_SECRET_KEY")

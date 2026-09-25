@@ -11,11 +11,11 @@ from audit.models import AuditLog
 from audit.services import log_event
 from imaging.models import Dataset
 
-from .ml_pipeline import DatasetValidationError, validate_dataset_for_training
-from .models import ModelVersion, TrainingJob
-from .serializers import ModelVersionSerializer, TrainingJobSerializer
-from .services import activate_model_version
-from .tasks import train_model_task
+from ..ml_pipeline import DatasetValidationError, validate_dataset_for_training
+from ..models import ModelVersion, TrainingJob
+from ..serializers import ModelVersionSerializer, TrainingJobSerializer
+from ..services import activate_model_version
+from ..tasks import train_model_task
 
 logger = logging.getLogger(__name__)
 

@@ -4,7 +4,7 @@ from django.views.decorators.cache import never_cache
 
 from imaging.models import Dataset
 
-from .models import ModelVersion, TrainingJob
+from ..models import ModelVersion, TrainingJob
 
 
 def _is_staff(user):

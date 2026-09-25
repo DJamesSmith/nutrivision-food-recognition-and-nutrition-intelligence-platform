@@ -1,6 +1,7 @@
 from django.urls import path
 
-from . import api_views, views
+from .views import views
+from .views.views import api_views
 
 app_name = 'imaging'
 
