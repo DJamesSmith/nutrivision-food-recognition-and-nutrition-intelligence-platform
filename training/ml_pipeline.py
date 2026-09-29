@@ -26,10 +26,7 @@ def validate_dataset_for_training(dataset):
     distribution = list(dataset.get_class_distribution())
 
     if len(distribution) < 2:
-        raise DatasetValidationError(
-            f"Dataset '{dataset.name}' needs at least 2 classes to train a classifier "
-            f"(found {len(distribution)})."
-        )
+        raise DatasetValidationError(f"Dataset '{dataset.name}' needs at least 2 classes to train a classifier (found {len(distribution)}).")
 
     insufficient = [row for row in distribution if row['count'] < settings.MIN_IMAGES_PER_CLASS_FOR_TRAINING]
     if insufficient:
@@ -114,8 +111,7 @@ def train_efficientnet(job_id):
                 ds = ds.shuffle(buffer_size=min(len(paths), 1000), seed=42)
                 ds = ds.map(
                     lambda img, lbl: (augmentation(img, training=True), lbl),
-                    num_parallel_calls=tf.data.AUTOTUNE,
-                )
+                    num_parallel_calls=tf.data.AUTOTUNE)
             ds = ds.map(
                 lambda img, lbl: (preprocess_input(img), lbl),
                 num_parallel_calls=tf.data.AUTOTUNE)
@@ -222,7 +218,8 @@ def train_efficientnet(job_id):
         job.save(update_fields=['status', 'completed_at', 'error_message'])
 
         log_event(
-            AuditLog.EventType.TRAINING_FAILED, user=job.created_by,
+            AuditLog.EventType.TRAINING_FAILED,
+            user=job.created_by,
             description=f"Training failed for job #{job.id}: {exc}",
             reference_model='TrainingJob', reference_id=job.id)
         raise
