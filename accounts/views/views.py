@@ -7,9 +7,9 @@ from django.shortcuts import redirect, render
 from django.views.decorators.cache import never_cache
 from django.views.decorators.http import require_http_methods
 
-from .forms import LoginForm, RegistrationForm
-from .signals import login_failed, user_logged_in_custom, user_logged_out_custom, user_registered
-from .utils import generate_access_token, generate_refresh_token, set_jwt_cookies, unset_jwt_cookies
+from ..forms import LoginForm, RegistrationForm
+from ..signals import login_failed, user_logged_in_custom, user_logged_out_custom, user_registered
+from ..utils import generate_access_token, generate_refresh_token, set_jwt_cookies, unset_jwt_cookies
 
 logger = logging.getLogger(__name__)
 
@@ -98,10 +98,8 @@ def dashboard_view(request):
     from training.services import get_active_model_version
 
     total_predictions = Prediction.objects.filter(user=request.user).count()
-    recent_predictions = (
-        Prediction.objects.filter(user=request.user)
-        .select_related('model_version')[:5]
-    )
+    recent_predictions = Prediction.objects.filter(user=request.user).select_related('model_version')[:5]
+    
     active_model = get_active_model_version()
     latest_training_job = TrainingJob.objects.select_related('dataset').first()
 

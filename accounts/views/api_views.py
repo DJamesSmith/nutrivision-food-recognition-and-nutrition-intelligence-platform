@@ -6,10 +6,10 @@ from django.http import JsonResponse
 from django.views.decorators.csrf import csrf_exempt
 from django.views.decorators.http import require_http_methods
 
-from .decorators import jwt_required, log_execution_time
-from .serializers import LoginSerializer, RegisterSerializer, UserSerializer
-from .signals import login_failed, user_logged_in_custom, user_logged_out_custom, user_registered
-from .utils import TokenError, decode_refresh_token, generate_access_token, generate_refresh_token, \
+from ..decorators import jwt_required, log_execution_time
+from ..serializers import LoginSerializer, RegisterSerializer, UserSerializer
+from ..signals import login_failed, user_logged_in_custom, user_logged_out_custom, user_registered
+from ..utils import TokenError, decode_refresh_token, generate_access_token, generate_refresh_token, \
     set_jwt_cookies, unset_jwt_cookies
 
 logger = logging.getLogger(__name__)
