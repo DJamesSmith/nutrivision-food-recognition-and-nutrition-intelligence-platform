@@ -28,10 +28,7 @@ def _error(message, status=400, data=None):
     return JsonResponse({"status": "error", "message": message, "data": data}, status=status)
 
 
-# ==================================================
 # POST /api/training/train/
-# ==================================================
-
 @require_http_methods(["POST"])
 @jwt_required
 @staff_required
@@ -66,8 +63,7 @@ def train_api(request):
         epochs=epochs or settings.DEFAULT_TRAINING_EPOCHS_HEAD,
         created_by=request.user)
 
-    # Training must NOT execute inside this request — queue it and return
-    # immediately with the task id.
+    # Training must NOT execute inside this request — queue it and return immediately with the task id.
     async_result = train_model_task.delay(job.id)
     job.task_id = async_result.id
     job.save(update_fields=['task_id'])
@@ -75,20 +71,15 @@ def train_api(request):
     log_event(
         AuditLog.EventType.TRAINING_STARTED, user=request.user, request=request,
         description=f"Training queued for dataset '{dataset.name}' (job #{job.id}).",
-        reference_model='TrainingJob', reference_id=job.id,
-    )
+        reference_model='TrainingJob', reference_id=job.id)
 
     return _success(
         "Model training has been queued.",
         data={"task_id": async_result.id, "training_job_id": job.id},
-        status=202,
-    )
+        status=202)
 
 
-# ==================================================
 # GET /api/training/jobs/
-# ==================================================
-
 @require_http_methods(["GET"])
 @jwt_required
 @staff_required
@@ -97,10 +88,7 @@ def training_job_list_api(request):
     return _success("Training jobs retrieved.", data=TrainingJobSerializer(jobs, many=True).data)
 
 
-# ==================================================
 # GET /api/training/jobs/<id>/
-# ==================================================
-
 @require_http_methods(["GET"])
 @jwt_required
 @staff_required
@@ -109,10 +97,7 @@ def training_job_detail_api(request, job_id):
     return _success("Training job retrieved.", data=TrainingJobSerializer(job).data)
 
 
-# ==================================================
 # GET /api/training/models/
-# ==================================================
-
 @require_http_methods(["GET"])
 @jwt_required
 @staff_required
@@ -121,10 +106,7 @@ def model_version_list_api(request):
     return _success("Model versions retrieved.", data=ModelVersionSerializer(versions, many=True).data)
 
 
-# ==================================================
 # POST /api/training/models/<id>/activate/
-# ==================================================
-
 @require_http_methods(["POST"])
 @jwt_required
 @staff_required
@@ -135,7 +117,6 @@ def model_version_activate_api(request, version_id):
     log_event(
         AuditLog.EventType.MODEL_UPDATED, user=request.user, request=request,
         description=f"Model version {version.version} manually activated.",
-        reference_model='ModelVersion', reference_id=version.id,
-    )
+        reference_model='ModelVersion', reference_id=version.id)
 
     return _success("Model version activated.", data=ModelVersionSerializer(version).data)
