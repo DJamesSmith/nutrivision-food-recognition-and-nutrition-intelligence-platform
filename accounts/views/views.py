@@ -7,9 +7,9 @@ from django.shortcuts import redirect, render
 from django.views.decorators.cache import never_cache
 from django.views.decorators.http import require_http_methods
 
-from .forms import LoginForm, RegistrationForm
-from .signals import login_failed, user_logged_in_custom, user_logged_out_custom, user_registered
-from .utils import generate_access_token, generate_refresh_token, set_jwt_cookies, unset_jwt_cookies
+from accounts.forms import LoginForm, RegistrationForm
+from accounts.signals import login_failed, user_logged_in_custom, user_logged_out_custom, user_registered
+from accounts.utils import generate_access_token, generate_refresh_token, set_jwt_cookies, unset_jwt_cookies
 
 logger = logging.getLogger(__name__)
 

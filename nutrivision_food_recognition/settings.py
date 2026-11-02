@@ -288,6 +288,7 @@ LOGGING = {
 # psql -U django_user -d nutrivision_db
 # DROP DATABASE nutrivision_db
 # CREATE DATABASE nutrivision_db OWNER django_user;
+# python manage.py createsuperuser
 
 # Run this command for running on localhost in flutter app (Means: Django, listen for connections coming through any network interface on port 8000):
 # python manage.py runserver 0.0.0.0:8000
