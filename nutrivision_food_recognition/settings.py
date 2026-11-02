@@ -194,6 +194,9 @@ CELERY_TASK_TRACK_STARTED = True
 # Safety ceiling: EfficientNetB0 training jobs are long-running but must not be allowed to hang a worker forever.
 CELERY_TASK_TIME_LIMIT = 60 * 60 * 6    # 6 hours
 CELERY_WORKER_PREFETCH_MULTIPLIER = 1   # one training job per worker slot at a time
+# 'solo' = run tasks inside the worker's main process (no child processes). Fixes the macOS / Python 3.14 'spawn' crash
+# (ValueError: not enough values to unpack (expected 3, got 0)) and gives TensorFlow every CPU core instead of splitting them across 10 children.
+CELERY_WORKER_POOL = 'solo'
 
 # ----------------- MACHINE LEARNING / EFFICIENTNETB0 TRAINING -----------------
 
@@ -207,7 +210,9 @@ EFFICIENTNET_INPUT_SHAPE = (224, 224, 3)
 
 DEFAULT_TRAINING_BATCH_SIZE = 32
 DEFAULT_TRAINING_EPOCHS_HEAD = 10
-DEFAULT_TRAINING_EPOCHS_FINE_TUNE = 5
+DEFAULT_TRAINING_EPOCHS_FINE_TUNE = 0   # 0 = skip fine-tuning (fastest). Set to 3-5 for a few extra accuracy points at the cost of much slower epochs.
+# Stop training once val_loss hasn't improved for this many epochs (best weights are restored).
+EARLY_STOPPING_PATIENCE = 3
 DEFAULT_VALIDATION_SPLIT = 0.2
 
 # A class needs at least this many images before a dataset is considered trainable — keeps a lopsided/incomplete dataset from silently producing a useless model.
@@ -302,6 +307,6 @@ LOGGING = {
 # python manage.py import_food101 /Users/user/Desktop/Datasets/food-102/training --owner-email admin@gmail.com --dataset-name "food-102" --limit-per-class 100
 
 # redis-server
-# celery -A nutrivision_food_recognition worker -l info --pool=solo
+# celery -A nutrivision_food_recognition worker -l info
 
 # source ../learning_django/env_image_classification_main/env_image_processing/bin/activate
