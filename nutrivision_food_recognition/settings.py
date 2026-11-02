@@ -302,6 +302,6 @@ LOGGING = {
 # python manage.py import_food101 /Users/user/Desktop/Datasets/food-102/training --owner-email admin@gmail.com --dataset-name "food-102" --limit-per-class 100
 
 # redis-server
-# celery -A nutrivision_food_recognition worker -l info
+# celery -A nutrivision_food_recognition worker -l info --pool=solo
 
 # source ../learning_django/env_image_classification_main/env_image_processing/bin/activate
