@@ -303,8 +303,8 @@ LOGGING = {
 # 192.168.0.105
 # This change is to be made in flutter app's baseurl, django's settings.py
 
-# python manage.py import_food101 /Users/user/Desktop/Datasets/food-101/images --owner-email admin@gmail.com --dataset-name "food-101" --limit-per-class 100
-# python manage.py import_food101 /Users/user/Desktop/Datasets/food-102/training --owner-email admin@gmail.com --dataset-name "food-102" --limit-per-class 100
+# python manage.py import_food101 /Users/user/Desktop/Datasets/food-101/images --owner-email admin@gmail.com --dataset-name "food-101" --limit-per-class 30
+# python manage.py import_food101 /Users/user/Desktop/Datasets/food-102/training --owner-email admin@gmail.com --dataset-name "food-102" --limit-per-class 30
 
 # redis-server
 # celery -A nutrivision_food_recognition worker -l info
