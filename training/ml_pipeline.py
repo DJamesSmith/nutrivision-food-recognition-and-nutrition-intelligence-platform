@@ -95,8 +95,6 @@ def train_efficientnet(job_id):
             image = tf.image.decode_image(raw, channels=3, expand_animations=False)
             image.set_shape([None, None, 3])
             image = tf.image.resize(image, img_size)
-            # uint8 keeps the in-memory cache 4x smaller than float32 (~150 KB per image instead of ~600 KB).
-            image = tf.cast(tf.clip_by_value(tf.round(image), 0, 255), tf.uint8)
             return image, label
 
         # ---- Data Augmentation (training split only) ----
@@ -109,9 +107,6 @@ def train_efficientnet(job_id):
         def _build_dataset(paths, lbls, training):
             ds = tf.data.Dataset.from_tensor_slices((paths, lbls))
             ds = ds.map(_load_and_resize, num_parallel_calls=tf.data.AUTOTUNE)
-            # Decode + resize each JPEG only ONCE (first epoch), then reuse it from RAM for every later epoch.
-            ds = ds.cache()
-            ds = ds.map(lambda img, lbl: (tf.cast(img, tf.float32), lbl), num_parallel_calls=tf.data.AUTOTUNE)
             if training:
                 ds = ds.shuffle(buffer_size=min(len(paths), 1000), seed=42)
                 ds = ds.map(
@@ -143,9 +138,7 @@ def train_efficientnet(job_id):
 
         # ---- Training (classification head only) ----
         epochs_head = job.epochs or settings.DEFAULT_TRAINING_EPOCHS_HEAD
-        # EarlyStopping ends training as soon as the model stops improving instead of always running every requested epoch.
-        early_stopping = tf.keras.callbacks.EarlyStopping(monitor='val_loss', patience=settings.EARLY_STOPPING_PATIENCE, restore_best_weights=True)
-        history = model.fit(train_ds, validation_data=val_ds, epochs=epochs_head, callbacks=[early_stopping], verbose=2)
+        history = model.fit(train_ds, validation_data=val_ds, epochs=epochs_head, verbose=2)
 
         # ---- Optional fine-tuning: unfreeze the top of the backbone ----
         if settings.DEFAULT_TRAINING_EPOCHS_FINE_TUNE > 0:
@@ -159,12 +152,12 @@ def train_efficientnet(job_id):
                 metrics=['accuracy'])
             history = model.fit(
                 train_ds, validation_data=val_ds,
-                epochs=settings.DEFAULT_TRAINING_EPOCHS_FINE_TUNE, callbacks=[early_stopping], verbose=2)
+                epochs=settings.DEFAULT_TRAINING_EPOCHS_FINE_TUNE, verbose=2)
 
         final_train_acc = float(history.history['accuracy'][-1])
+        final_val_acc = float(history.history['val_accuracy'][-1])
         final_train_loss = float(history.history['loss'][-1])
-        # Re-score validation with the weights actually being saved (EarlyStopping may have restored an earlier, better epoch).
-        final_val_loss, final_val_acc = (float(v) for v in model.evaluate(val_ds, verbose=0))
+        final_val_loss = float(history.history['val_loss'][-1])
 
         # ---- Evaluation ----
         # Macro-averaged precision/recall/F1: appropriate for a multiclass
